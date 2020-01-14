@@ -70,7 +70,10 @@
         <h1>トップページ</h1>
         <p>ようこそ<%= username %>さん</p>
         <p>sessionID=<%= session.getId() %></p>
-        <input type="button" onclick="location.href='../service/logout.jsp'" value="ログアウト">
+        <input type="button" onclick="location.href='../service/logout.jsp'" value="ログアウト"><br>
+        
+        <input type="button" onclick="location.href='./orderEditPage.jsp'" value="受注画面（新規）"><br>
+        
         
         <p>
             データ件数は<%= cnt %>です。<br>
