@@ -22,7 +22,7 @@
     DatabeseAccess da = new DatabeseAccess();
     da.open();
     
-    String sql = "select USER_NAME, AUTHORITY from users "
+    String sql = "select USER_NAME, POSITION from users "
                + "where USER_CODE = '" + userId + "' "
                + "and   PASSWORD = '" + password + "' "
                + "and   DELETE_FLAG = 0"; 
@@ -34,7 +34,7 @@
         // セッションに登録
         session.setAttribute("UserId", userId);
         session.setAttribute("UserName", rs.getString("USER_NAME"));
-        session.setAttribute("Authority", rs.getString("AUTHORITY"));
+        session.setAttribute("Position", rs.getString("POSITION"));
         
         // トップページにリダイレクト(遷移)
         response.sendRedirect("../view/toppage.jsp");
