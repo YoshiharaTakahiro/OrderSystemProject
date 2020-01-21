@@ -6,11 +6,9 @@
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%
-    String bsCss = "<!-- Bootstrap CSS -->" +
-                   "<link rel='stylesheet' href='../css/bootstrap.min.css'>";
+    String bsCss = "<link rel='stylesheet' href='../css/bootstrap.min.css'>";
     
-    String bsJs = "<!-- Bootstrap JavaScript --> " +
-                  "<script src='../js/jquery-3.4.1.min.js'></script> " + 
+    String bsJs = "<script src='../js/jquery-3.4.1.min.js'></script> " + 
                   "<script src='../js/popper.min.js'></script> " +
                   "<script src='../js/bootstrap.min.js'></script> ";
 %>
