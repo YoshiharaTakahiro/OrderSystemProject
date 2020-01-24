@@ -7,6 +7,47 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="java.sql.*, mydb.DatabeseAccess" %>
 <%@include file="../service/bootstrap.jsp" %>
+<%!
+//---------------------------------------------------------------
+//汎用マスタープルダウンのHTMLを作成するメソッド
+// 引数：String division = 区分
+//	String queryStr = 受信したクエリ
+//	String optionStr = "htmlの文字列を入れる変数
+// 戻値：html文
+//---------------------------------------------------------------
+String doPullDownMake(String division, String queryStr, String optionStr){
+    String sql;
+    ResultSet rs;
+
+    DatabeseAccess da = new DatabeseAccess();
+    try {
+	da.open();
+
+	//SQL文を実行する
+	sql = "select DIVISION, GENERAL_CODE, GENERAL_NAME from generals where DIVISION=\"" + division + "\"";
+        rs = da.getResultSet(sql);
+	// DBを読み出してプルダウンメニューを作成する
+	while(rs.next()) {
+	    String genCode = rs.getString("GENERAL_CODE");
+	    String genName = rs.getString("GENERAL_NAME");
+
+	    optionStr += "<option value=" + "\"" + genCode + "\" ";
+
+	    if(genCode.equals(queryStr)) {
+		optionStr += "selected";
+	    }
+
+	    optionStr += ">" + genName + "</option>";
+	}
+
+    } catch (Exception e) {
+    }
+    
+    optionStr += "</select>";  
+    return optionStr;
+}
+%>
+
 <%
     int DISP_NUM = 20;		//検索結果表示件数
     String daialogMsg = "";
@@ -50,155 +91,31 @@
     da.open();
 
     //-------------------ブランド選択肢を作成する----------------------------
-    String division = "BLD";					    //★
-    String brandOption;						    //★
-    String queryStr = queryBrand;				    //★
     String optionStr = "<select name=\"brand\" class=\"minimal\">";//★
-//    optionStr += "<option value=\"選択\">選択</option>";
     optionStr += "<option value=\"\">選択</option>";
-
-    //SQL文を実行する
-    sql = "select DIVISION, GENERAL_CODE, GENERAL_NAME from generals where DIVISION=\"" + division + "\"";
-    rs = da.getResultSet(sql);
-    
-    // DBを読み出してプルダウンメニューを作成する
-    while(rs.next()) {
-        String genCode = rs.getString("GENERAL_CODE");
-        String genName = rs.getString("GENERAL_NAME");
-
-	optionStr += "<option value=" + "\"" + genCode + "\" ";
-
-	if(genCode.equals(queryStr)) {
-	    optionStr += "selected";
-	}
-	
-	optionStr += ">" + genName + "</option>";
-    }
-    
-    optionStr += "</select>";
-    brandOption = optionStr;					//★
+    String brandOption = doPullDownMake("BLD", queryBrand, optionStr);
     
     //-------------------カラー選択肢を作成する----------------------------
-    division = "COR";						    //★
-    String colorOption;						    //★
-    queryStr = queryColor;					    //★
     optionStr = "<select name=\"color\" class=\"minimal\">";	    //★
-//    optionStr += "<option value=\"選択\">選択</option>";
     optionStr += "<option value=\"\">選択</option>";
-
-    //SQL文を実行する
-    sql = "select DIVISION, GENERAL_CODE, GENERAL_NAME from generals where DIVISION=\"" + division + "\"";
-    rs = da.getResultSet(sql);
-    
-    // DBを読み出してプルダウンメニューを作成する
-    while(rs.next()) {
-        String genCode = rs.getString("GENERAL_CODE");
-        String genName = rs.getString("GENERAL_NAME");
-
-	optionStr += "<option value=" + "\"" + genCode + "\" ";
-
-	if(genCode.equals(queryStr)) {
-	    optionStr += "selected";
-	}
-	
-	optionStr += ">" + genName + "</option>";
-    }
-    
-    optionStr += "</select>";
-    colorOption = optionStr;					//★
-
+    String colorOption = doPullDownMake("COR", queryColor, optionStr);
+  
     //-------------------クラス選択肢を作成する----------------------------
-    division = "CLS";						    //★
-    String classOption;						    //★
-    queryStr = queryClass;					    //★
     optionStr = "<select name=\"classcode\" class=\"minimal\">";	    //★
-//    optionStr += "<option value=\"選択\">選択</option>";
     optionStr += "<option value=\"\">選択</option>";
-
-    //SQL文を実行する
-    sql = "select DIVISION, GENERAL_CODE, GENERAL_NAME from generals where DIVISION=\"" + division + "\"";
-    rs = da.getResultSet(sql);
-    
-    // DBを読み出してプルダウンメニューを作成する
-    while(rs.next()) {
-        String genCode = rs.getString("GENERAL_CODE");
-        String genName = rs.getString("GENERAL_NAME");
-
-	optionStr += "<option value=" + "\"" + genCode + "\" ";
-
-	if(genCode.equals(queryStr)) {
-	    optionStr += "selected";
-	}
-	
-	optionStr += ">" + genName + "</option>";
-    }
-    
-    optionStr += "</select>";
-    classOption = optionStr;					//★    
+    String classOption = doPullDownMake("CLS", queryClass, optionStr);
     
     //-------------------分類選択肢を作成する----------------------------
-    division = "TYP";						    //★
-    String typeOption;						    //★
-    queryStr = queryType;					    //★
     optionStr = "<select name=\"type\" class=\"minimal\">";	    //★
-//    optionStr += "<option value=\"選択\">選択</option>";
     optionStr += "<option value=\"\">選択</option>";
+    String typeOption = doPullDownMake("TYP", queryType, optionStr);
 
-    //SQL文を実行する
-    sql = "select DIVISION, GENERAL_CODE, GENERAL_NAME from generals where DIVISION=\"" + division + "\"";
-    rs = da.getResultSet(sql);
-    
-    // DBを読み出してプルダウンメニューを作成する
-    while(rs.next()) {
-        String genCode = rs.getString("GENERAL_CODE");
-        String genName = rs.getString("GENERAL_NAME");
-
-	optionStr += "<option value=" + "\"" + genCode + "\" ";
-
-	if(genCode.equals(queryStr)) {
-	    optionStr += "selected";
-	}
-	
-	optionStr += ">" + genName + "</option>";
-    }
-    
-    optionStr += "</select>";
-    typeOption = optionStr;					//★    
-    
-    
-    
-    
     // セッションの取得
     String password = (String) session.getAttribute("Password");
 
-//    //データ件数を取得する
-//    String sqlCnt = "select count(*) As cnt from products";
-//    ResultSet rsCnt = da.getResultSet(sqlCnt);
-//    
-//    String cnt = "0";
-//
-//    while(rsCnt.next()) {
-//        cnt = rsCnt.getString("cnt");
-//    }
-//    
     //SQL文を作成する
-//    String sql = "select PRODUCT_CODE, PRODUCT_NAME, BRAND, COLOR_CODE, CLASS, TYPE, SIZE, PRICE, STOCK from products ";
     sql = "PRODUCT_CODE, PRODUCT_NAME, BRAND, COLOR_CODE, CLASS, TYPE, SIZE, PRICE, STOCK, MATERIAL_FRONT, MATERIAL_INSIDE,JANCODE from products ";
 
-//    //クエリ情報がなかった時は""に置き換える
-//    if(queryProductCode == null) queryProductCode = "";
-//    if(queryProductName == null) queryProductName = "";
-//    if(queryBrand == null) queryBrand = "";
-//    if(queryColor == null) queryColor = "";
-//    if(queryClass == null) queryClass = "";
-//    if(queryType == null) queryType = "";
-//    if(queryAllocation == null) queryAllocation = "";
-//
-//    if(querySubmitBtn == null ) {
-//	querySubmitBtn = "";
-//	offsetNum = 0;		//DB表示時のオフセット値を初期化する
-//    }
-//
     //商品コード、商品名： 部分一致
     sql += "where PRODUCT_CODE " + "like " + "\'%" + queryProductCode + "%\' ";
 
@@ -213,7 +130,6 @@
     if(!queryAllocation.equals("")) sql += "and ALLOCATION=" + "\'" + queryAllocation + "\' ";
 
     //検索データ件数を取得する
-//    String sqlCnt = "select count(*) As cnt from products ";
     String sqlCnt = "select count(*) ";
     sqlCnt += sql;
     ResultSet rsCnt = da.getResultSet(sqlCnt);
@@ -221,12 +137,9 @@
     String cnt = "0";
 
     while(rsCnt.next()) {
-//        cnt = rsCnt.getString("cnt");
         cnt = rsCnt.getString("PRODUCT_CODE");
     }
     
-//    sql += "order by PRODUCT_CODE, PRODUCT_NAME ";
-//    sql += "order by PRODUCT_CODE, PRODUCT_NAME limit 100 ";
     sql += "order by PRODUCT_CODE, PRODUCT_NAME limit " + DISP_NUM + " ";
 
     if(querySubmitBtn.equals("forward")){
@@ -242,10 +155,8 @@
     }
 
     sql += "offset " + String.valueOf(offsetNum) + ";";
-//    sql += "offset " + String.valueOf(offsetNum);
     
     //SQL文を実行する
-//    ResultSet rs = da.getResultSet(sql);
     rs = da.getResultSet("select " + sql);
     
     //テーブルヘッダー部を作成する
@@ -349,10 +260,12 @@
      
     <body>
 	<%!
+	    //静的変数
 	    int offsetNum = 0;	    //DB表示時のオフセット値
 	    int numOfSearch = 0;    //DB検索結果件数
 	    String queryPageId = "";	//戻り先URL
 	%>
+
 	<h3 class="text-center mt-sm-4">商品検索</h3>
 	<div class="container"><!-- container：箱 -->
 	    <form action="productSearchPage.jsp" method="post">
@@ -380,53 +293,21 @@
 		<div class="row form-group input-group" ><!-- row：2行目 -->
 		    <div class="col-auto">
 			<label for="inputBrand" class="col-form-label">ブランド</label><br>
-			<!-- 
-			<select name="brand" class="minimal">
-				<option value=""></option>
-				<option value="KT" <% if("KT".equals(queryBrand)) { %> selected <% ; } %>>KT</option>			    
-				<option value="MOBAC" <% if("MOBAC".equals(queryBrand)) { %> selected <% ; } %>>MOBAC</option>			    
-				<option value="KARI" <% if("KARI".equals(queryBrand)) { %> selected <% ; } %>>KARI</option>			    
-			</select>
-			-->
 			<%= brandOption %>
 		    </div>
 
 		    <div class="col-auto">
 			<label for="inputColor" class="col-form-label col-auto">カラー</label><br>
-			<!--
-			<select name="color" class="minimal">
-				<option value=""></option>
-				<option value="2" <% if("2".equals(queryColor)) { %> selected <% ; } %>>白</option>			    
-				<option value="12" <% if("12".equals(queryColor)) { %> selected <% ; } %>>黒</option>			    
-				<option value="KARI" <% if("KARI".equals(queryColor)) { %> selected <% ; } %>>KARI</option>			    
-			</select>
-			-->
 			<%= colorOption %>
 		    </div>
 		    
 		    <div class="col-auto">
 			<label for="inputClass" class="col-form-label col-auto">クラス</label><br>
-			<!--
-			<select name="classcode" class="minimal">
-				<option value=""></option>
-				<option value="2" <% if("2".equals(queryClass)) { %> selected <% ; } %>>婦人</option>			    
-				<option value="3" <% if("3".equals(queryClass)) { %> selected <% ; } %>>紳士</option>			    
-				<option value="KARI" <% if("KARI".equals(queryClass)) { %> selected <% ; } %>>KARI</option>			    
-			</select>
-			-->
 			<%= classOption %>
 		    </div>
 		    
 		    <div class="col-auto">
 			<label for="inputType" class="col-form-label col-auto">分類</label><br>
-			<!--
-			<select name="type" class="minimal">
-				<option value=""></option>
-				<option value="3" <% if("3".equals(queryType)) { %> selected <% ; } %>>定番</option>			    
-				<option value="2" <% if("2".equals(queryType)) { %> selected <% ; } %>>スポット</option>			    
-				<option value="1" <% if("1".equals(queryType)) { %> selected <% ; } %>>特価</option>			    
-			</select>
-			-->
 			<%= typeOption %>
 		    </div>
 		</div>
@@ -451,13 +332,12 @@
 		<div class="col-11 clearfix float-right">
 		    <div class="float-right">
 			<!-- 直前のページに戻る -->
-			<!-- <input class="btn btn-secondary" type="button" onclick="history.back()" value="キャンセル"> -->
 			<input class="btn btn-secondary" type="button" onclick="location.href='<%= queryPageId %>'" value="キャンセル">
 			
 			<!-- 選択ボタン -->
 			<!-- <button class="ml-sm-3 btn btn-secondary" type="submit" name="submitBtn" value="selection">選択</button> -->
 			<!-- <input class="ml-sm-3 btn btn-secondary" type="button" onclick="location.href='<%= queryPageId %>'" value="選択"> -->
-			<input class="btn btn-secondary" type="button" id="selectButton" value="選択">
+			<input class="ml-sm-3 btn btn-secondary" type="button" id="selectButton" value="選択">
 		    
 		    </div>
 		</div>
