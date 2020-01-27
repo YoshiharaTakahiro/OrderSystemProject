@@ -62,7 +62,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
     String queryColor = request.getParameter("color");
     String queryClass = request.getParameter("classcode");
     String queryType = request.getParameter("type");
-    String queryAllocation = request.getParameter("inputAllocation");
+    String queryJanCode = request.getParameter("inputJanCode");
     String querySubmitBtn = request.getParameter("submitBtn");
     String queryPage = request.getParameter("pageId");
 
@@ -73,7 +73,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
     if(queryColor == null) queryColor = "";
     if(queryClass == null) queryClass = "";
     if(queryType == null) queryType = "";
-    if(queryAllocation == null) queryAllocation = "";
+    if(queryJanCode == null) queryJanCode = "";
 
     if(querySubmitBtn == null ) {
 	querySubmitBtn = "";
@@ -127,7 +127,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
     if(!queryColor.equals(""))	sql += "and COLOR_CODE=" + "\'" + queryColor + "\' ";
     if(!queryClass.equals(""))	sql += "and CLASS=" + "\'" + queryClass + "\' ";
     if(!queryType.equals(""))	sql += "and TYPE=" + "\'" + queryType + "\' ";
-    if(!queryAllocation.equals("")) sql += "and ALLOCATION=" + "\'" + queryAllocation + "\' ";
+    if(!queryJanCode.equals("")) sql += "and JANCODE=" + "\'" + queryJanCode + "\' ";
 
     //検索データ件数を取得する
     String sqlCnt = "select count(*) ";
@@ -231,7 +231,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	queryColor.equals("") && 
 	queryClass.equals("") && 
 	queryType.equals("") && 
-	queryAllocation.equals("")) {
+	queryJanCode.equals("")) {
        
 //kari
 //	tableHTML = "";		//テーブルを非表示にする
@@ -284,8 +284,8 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 		    </div>
 		    
 		    <div class="col-3">
-			<label for="inputAllocation" class="col-form-label">JANコード</label>
-			<input type="text" class="form-control" name="inputAllocation" placeholder="JANコード" value=<%= queryAllocation %>>
+			<label for="inputJanCode" class="col-form-label">JANコード</label>
+			<input type="text" class="form-control" name="inputJanCode" placeholder="JANコード" value=<%= queryJanCode %>>
 		    </div>
 		</div>
 
