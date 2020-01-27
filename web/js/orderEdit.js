@@ -264,17 +264,25 @@ $(function () {
     $("#searchProductBt").click( function() {
         
         var form = document.createElement('form');
-        var request = document.createElement('input');
-
+        
         form.method = 'POST';
         form.action = '../view/productSearchPage.jsp';
 
+        // 商品検索画面に画面IDを送信
+        var request = document.createElement('input');
         request.type = 'hidden'; 
         request.name = 'pageId';
-        request.value = 'orderEditPage';
-
-        // 商品検索画面に画面IDを送信
+        request.value = 'orderEditPage.jsp';
         form.appendChild(request);
+        
+        // 受注番号を送信
+        if($('#orderCode').value != null){
+            var request2 = document.createElement('input');
+            request2.name = 'orderCode';
+            request2.value = $('#orderCode').value;
+            form.appendChild(request2);
+        }
+       
         document.body.appendChild(form);
 
         form.submit();
