@@ -26,7 +26,7 @@ $(function () {
 		productCode = table.rows[i].cells[1].innerText;		// 商品コード
 		productName = table.rows[i].cells[1].innerText;		// 商品名
 		colorCode = table.rows[i].cells[4].innerText;		// カラーコード
-		price = Number(table.rows[i].cells[8].innerText);		// 価格
+		price = Number(table.rows[i].cells[8].innerText);	// 価格
 		stock = table.rows[i].cells[9].innerText;		// 個数
 
 		break;
@@ -35,41 +35,44 @@ $(function () {
 
         // 受注登録処理呼出
 	var form = document.createElement('form');
-	var request = document.createElement('input');
 
 	form.method = 'POST';
 	form.action = './orderEditPage.jsp';	    //仮　本当は変数で
-	request.type = 'hidden'; //入力フォームが表示されないように
-
-	//返却するデータを作成する
-	request.name = 'productCode';
-	request.value = productCode;
-	form.appendChild(request);
 	document.body.appendChild(form);
 
 	//返却するデータを作成する
-	request.name = 'productName';
-	request.value = productName;
-	form.appendChild(request);
-	document.body.appendChild(form);
+	var request1 = document.createElement('input');
+	request1.type = 'hidden'; //入力フォームが表示されないように
+	request1.name = 'productCode';
+	request1.value = productCode;
+	form.appendChild(request1);
 
 	//返却するデータを作成する
-	request.name = 'colorCode';
-	request.value = colorCode;
-	form.appendChild(request);
-	document.body.appendChild(form);
+	var request2 = document.createElement('input');
+	request2.type = 'hidden'; //入力フォームが表示されないように
+	request2.name = 'productName';
+	request2.value = productName;
+	form.appendChild(request2);
 
 	//返却するデータを作成する
-	request.name = 'stock';
-	request.value = stock;
-	form.appendChild(request);
-	document.body.appendChild(form);
+	var request3 = document.createElement('input');
+	request3.type = 'hidden'; //入力フォームが表示されないように
+	request3.name = 'colorCode';
+	request3.value = colorCode;
+	form.appendChild(request3);
 
 	//返却するデータを作成する
-	request.name = 'price';
-	request.value = price;
-	form.appendChild(request);
-	document.body.appendChild(form);
+	var request4 = document.createElement('input');
+	request4.type = 'hidden'; //入力フォームが表示されないように
+	request4.name = 'stock';
+	request4.value = stock;
+	form.appendChild(request4);
+
+	//返却するデータを作成する
+	var request5 = document.createElement('input');
+	request5.name = 'price';
+	request5.value = price;
+	form.appendChild(request5);
 
 	form.submit();
         
