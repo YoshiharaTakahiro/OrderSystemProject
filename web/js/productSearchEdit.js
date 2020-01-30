@@ -4,6 +4,8 @@
     Author     : masahiro.fujihara
  */
 
+/* global queryPageIdForJs */
+
 $(function () {
 
     // 選択ボタン処理
@@ -24,7 +26,7 @@ $(function () {
 
 	    if(selFlg) {
 		productCode = table.rows[i].cells[1].innerText;		// 商品コード
-		productName = table.rows[i].cells[1].innerText;		// 商品名
+		productName = table.rows[i].cells[2].innerText;		// 商品名
 		colorCode = table.rows[i].cells[4].innerText;		// カラーコード
 		price = Number(table.rows[i].cells[8].innerText);	// 価格
 		stock = table.rows[i].cells[9].innerText;		// 個数
@@ -37,8 +39,8 @@ $(function () {
 	var form = document.createElement('form');
 
 	form.method = 'POST';
-//	form.action = '<%= queryPageId %>';
-	form.action = './orderEditPage.jsp';	    //仮　本当は変数で
+//	form.action = './orderEditPage.jsp';	    //仮
+	form.action = document.getElementById("tmp_value1").value;
 	document.body.appendChild(form);
 
 	//返却するデータを作成する
@@ -74,6 +76,12 @@ $(function () {
 	request5.name = 'price';
 	request5.value = price;
 	form.appendChild(request5);
+
+	//返却するデータを作成する
+	var request6 = document.createElement('input');
+	request6.name = 'orderNo';
+	request6.value = document.getElementById("tmp_value2").value;
+	form.appendChild(request6);
 
 	form.submit();
         
