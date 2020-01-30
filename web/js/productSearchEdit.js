@@ -37,6 +37,7 @@ $(function () {
 	var form = document.createElement('form');
 
 	form.method = 'POST';
+//	form.action = '<%= queryPageId %>';
 	form.action = './orderEditPage.jsp';	    //仮　本当は変数で
 	document.body.appendChild(form);
 
