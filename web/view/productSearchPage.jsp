@@ -65,7 +65,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
     String queryJanCode = request.getParameter("inputJanCode");
     String querySubmitBtn = request.getParameter("submitBtn");
     String queryPageIdTmp = request.getParameter("pageId");
-    String queryOrderNoTmp = request.getParameter("orderNo");
+    String queryOrderCodeTmp = request.getParameter("orderCode");
 
     //クエリ情報がなかった時は""に置き換える
     if(queryProductCode == null) queryProductCode = "";
@@ -82,16 +82,16 @@ String doPullDownMake(String division, String queryStr, String optionStr){
     }
 
     if(queryPageIdTmp == null) queryPageIdTmp = "";
-    if(queryOrderNoTmp == null) queryOrderNoTmp = "";
+    if(queryOrderCodeTmp == null) queryOrderCodeTmp = "";
 
     //戻り先URLを作成する
     if(!queryPageIdTmp.equals("")) {
         queryPageId = "./" + queryPageIdTmp;
     }
 
-    //戻すorderNoを作成する
-    if(!queryOrderNoTmp.equals("")) {
-        queryOrderNo = queryOrderNoTmp;
+    //戻すorderCodeを作成する
+    if(!queryOrderCodeTmp.equals("")) {
+        queryOrderCode = queryOrderCodeTmp;
     }
 
     DatabeseAccess da = new DatabeseAccess();
@@ -209,7 +209,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
         // テーブル用HTMLを作成する
         tableHTML += "<tr>";
 	tableHTML += "<td scope=\"row\">"
-		+ "<input type=\"radio\" name=\"options\" id=\"option1\">" +"</td>"			
+		+ "<input type=\"radio\" name=\"options\" id=\"option" + numOfSearch + "\">" +"</td>"			
 	    + "<td>" + productCode + "</td>"
 	    + "<td>" + productName + "</td>"
 	    + "<td>"+ brand + "</td>"
@@ -271,11 +271,11 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	    int offsetNum = 0;	    //DB表示時のオフセット値
 	    int numOfSearch = 0;    //DB検索結果件数
 	    String queryPageId = "";	//戻り先URL
-	    String queryOrderNo = "";   //オーダーNo
+	    String queryOrderCode = "";   //オーダーNo
 	%>
 
 	<input type="hidden" id="tmp_value1" value="<%= queryPageId %>">	
-	<input type="hidden" id="tmp_value2" value="<%= queryOrderNo %>">	
+	<input type="hidden" id="tmp_value2" value="<%= queryOrderCode %>">	
 	
 	<h3 class="text-center mt-sm-4">商品検索</h3>
 	<div class="container"><!-- container：箱 -->
@@ -365,11 +365,6 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	<%= bsJs %>
 
 	<!-- JavaScript -->
-	<script type="text/javascript">
-	    var queryPageIdForJs = <%= queryPageId %>;
-	    var queryOrderNoForJs = <%= queryOrderNo %>;
-	</script>
-        
 	<script src='../js/productSearchEdit.js'></script> 
 	
     </body>
