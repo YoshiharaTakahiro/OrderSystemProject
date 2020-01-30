@@ -41,11 +41,14 @@
     // ボタンコントロール
     String buttonHTML = "";
     
+    // リクエストパラメータ文字コード設定
+    request.setCharacterEncoding("UTF-8");
+    
     // 受注番号の取得
-    String orderNo = (String) request.getParameter("orderNo");        
-    if(orderNo == null || orderNo == ""){
+    String orderCode = (String) request.getParameter("orderCode");        
+    if(orderCode == null || orderCode == ""){
         // 新規登録
-        orderNo = "";
+        orderCode = "";
         // 受注番号：空白、部署・受注者はログインユーザの情報を表示
         orderUserName = username;
         
@@ -72,7 +75,7 @@
                         + "and o.DEPARTMENT_CODE = d.DEPARTMENT_CODE "
                         + "and o.USER_CODE = u.USER_CODE "
                         + "and o.DELETE_FLAG = false "
-                        + "and o.ORDER_CODE = '" + orderNo + "' ";
+                        + "and o.ORDER_CODE = '" + orderCode + "' ";
         
         ResultSet rs = da.getResultSet(orderSql);
         
@@ -100,7 +103,7 @@
                          + "and d.PRODUCT_CODE = p.PRODUCT_CODE "
                          + "and d.COLOR_CODE = p.COLOR_CODE "
                          + "and d.DELETE_FLAG = false "
-                         + "and o.ORDER_CODE = '" + orderNo + "' "
+                         + "and o.ORDER_CODE = '" + orderCode + "' "
                          + "order by o.ORDER_CODE, d.DETAIL_CODE ";
 
         rs = da.getResultSet(detailSql);
@@ -169,6 +172,11 @@
                     + "</div>";        
 
     }
+    
+    // MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO
+    // クッキーからの情報を表示（新規追加したが検索などの画面遷移をしたとき用）
+    // 処理終わればクッキー削除
+    // クッキーを保尊するタイミングは商品検索ボタン、取引先検索ボタン押下時
     
     // 商品検索画面から戻ってきたとき
     String productSearchCode = (String) request.getParameter("productCode");
@@ -240,7 +248,7 @@
             <div class="row form-group" >
 		<div class="col-md-4">
                     <label for="orderCode" class="col-form-label">受注番号</label>
-                    <input type="text" class="form-control" id="orderCode" value="<%= orderNo %>" readonly>
+                    <input type="text" class="form-control" id="orderCode" value="<%= orderCode %>" readonly>
                 </div>            
 
     		<div class="col-md-4">

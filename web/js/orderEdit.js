@@ -260,7 +260,6 @@ $(function () {
     });
     
     // 商品検索ボタン
-    // 商品追加ボタン
     $("#searchProductBt").click( function() {
         
         var form = document.createElement('form');
@@ -276,10 +275,10 @@ $(function () {
         form.appendChild(request);
         
         // 受注番号を送信
-        if($('#orderCode').value != null){
+        if($('#orderCode').val() != ""){
             var request2 = document.createElement('input');
             request2.name = 'orderCode';
-            request2.value = $('#orderCode').value;
+            request2.value = $('#orderCode').val();
             form.appendChild(request2);
         }
        
