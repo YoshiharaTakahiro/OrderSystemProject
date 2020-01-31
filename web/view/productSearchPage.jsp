@@ -40,8 +40,11 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	    optionStr += ">" + genName + "</option>";
 	}
 
+	da.close();
+
     } catch (Exception e) {
     }
+    
     
     optionStr += "</select>";  
     return optionStr;
@@ -96,6 +99,9 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 
     DatabeseAccess da = new DatabeseAccess();
     da.open();
+
+    DatabeseAccess dga = new DatabeseAccess();
+    dga.open();
 
     //-------------------ブランド選択肢を作成する----------------------------
     String optionStr = "<select name=\"brand\" class=\"minimal\">";//★
@@ -195,10 +201,35 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	numOfSearch++;	//検索件数をカウントする
         String productCode = rs.getString("PRODUCT_CODE");  // 商品コード
         String productName = rs.getString("PRODUCT_NAME");  // 商品名
+
+	//ブランドコードから名称を求める
         String brand = rs.getString("BRAND");		    // ブランド
+	ResultSet grs = dga.getResultSet("select * from generals where DIVISION='BLD'and GENERAL_CODE=" + "\"" + brand  + "\"" + ";");
+	if(grs.next()) {
+	    brand = grs.getString("GENERAL_NAME");  //対応する名称があれば取得する。無ければコードのまま。
+	}
+
+	//カラーコードから名称を求める
         String color = rs.getString("COLOR_CODE");	    // カラー
-        String classCd = rs.getString("CLASS");		    // クラス
-        String type = rs.getString("TYPE");		    // 分類
+	grs = dga.getResultSet("select * from generals where DIVISION='COR'and GENERAL_CODE=" + "\"" + color + "\"" + ";");
+	if(grs.next()) {
+	    color = grs.getString("GENERAL_NAME");  //対応する名称があれば取得する。無ければコードのまま。
+	}
+	
+	//クラスコードから名称を求める
+	String classCd = rs.getString("CLASS");		    // クラス
+	grs = dga.getResultSet("select * from generals where DIVISION='CLS'and GENERAL_CODE=" + "\"" + classCd + "\"" + ";");
+	if(grs.next()) {
+	    classCd = grs.getString("GENERAL_NAME");  //対応する名称があれば取得する。無ければコードのまま。
+	}
+	
+	//タイプコードから名称を求める
+	String type = rs.getString("TYPE");		    // 分類
+	grs = dga.getResultSet("select * from generals where DIVISION='TYP'and GENERAL_CODE=" + "\"" + type + "\"" + ";");
+	if(grs.next()) {
+	    type = grs.getString("GENERAL_NAME");  //対応する名称があれば取得する。無ければコードのまま。
+	}
+	
         String size = rs.getString("SIZE");		    // サイズ
         String price = rs.getString("PRICE");		    // 商品単価
         String stock = rs.getString("STOCK");		    // 在庫数
@@ -230,6 +261,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 
     // データベースへのコネクションを閉じる
     da.close();
+    dga.close();
     
     // ダイアログメッセージ作成
     if(queryProductCode.equals("") &&
