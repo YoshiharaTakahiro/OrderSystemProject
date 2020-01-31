@@ -79,7 +79,7 @@ $(function () {
 
 	//返却するデータを作成する
 	var request6 = document.createElement('input');
-	request6.name = 'orderNo';
+	request6.name = 'orderCode';
 	request6.value = document.getElementById("tmp_value2").value;
 	form.appendChild(request6);
 
