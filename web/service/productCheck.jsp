@@ -6,7 +6,7 @@
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="java.sql.*, mydb.DatabeseAccess" %>
-<%@page import="java.io.*, java.util.*"%>
+<%@page import="java.io.*, java.util.*, javax.json.*"%>
 <%
     
     // 商品コード取得
@@ -16,8 +16,9 @@
     DatabeseAccess da = new DatabeseAccess();
     da.open();
     
-    // Jsonデータ
-    String resJson = "";
+    // Jsonオブジェクトビルダー
+    JsonObjectBuilder JsonObjB = Json.createObjectBuilder();
+    JsonArrayBuilder colorArrayB = Json.createArrayBuilder();
 
     // 商品情報取得
     String prodcutSql = "select distinct p.PRODUCT_CODE, p.PRODUCT_NAME "
@@ -29,7 +30,7 @@
     
     // Json生成
     while(rs.next()){
-        resJson += "{\"productName\":\"" + rs.getString("PRODUCT_NAME") + "\",";
+        JsonObjB.add("productName", rs.getString("PRODUCT_NAME"));
     }
     
     // カラーコード
@@ -42,20 +43,24 @@
     rs = da.getResultSet(colorSql);
     
     // Json生成（カラーコード）
-    resJson += "\"colors\":[";
     while(rs.next()){
-        resJson += "{\"colorCode\":\"" + rs.getString("COLOR_CODE") + "\",";
-        resJson += "\"color\":\"" + rs.getString("COLOR") + "\"},";        
-    }
-    resJson = resJson.substring(0, resJson.length()-1);
-    resJson += "]}";
+        colorArrayB.add(Json.createObjectBuilder().add("colorCode", rs.getString("COLOR_CODE"))
+                                                 .add("color", rs.getString("COLOR")).build());
+    }    
+    JsonObjB.add("colors", colorArrayB);
+
+    // 文字列に変換
+    String jsonString;
+    Writer writer = new StringWriter();
+    Json.createWriter(writer).write(JsonObjB.build());
+    jsonString = writer.toString();
     
-    System.out.println(resJson);
-    
+    System.out.println(jsonString);
+
     response.setContentType("application/json;charset=UTF-8");
     
     PrintWriter pw = response.getWriter();// pwオブジェクト
-    pw.print(resJson); // 出力
+    pw.print(jsonString); // 出力
     pw.close();
 
 %>

@@ -5,18 +5,64 @@
 --%>
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@page import="java.sql.*, mydb.DatabeseAccess, java.text.NumberFormat" %>
+<%@page import="java.sql.*, mydb.DatabeseAccess, java.text.NumberFormat, java.net.URLDecoder, java.io.*, javax.json.*" %>
 <%@include file="../service/bootstrap.jsp" %>
 <%@include file="../service/sessionCheck.jsp" %>
 <%@include file="../service/tabHeder.jsp" %>
+<%!
+    // 関数
+    String detailHtmlCreate(String productCode, String productName, String colorCode, int stock, int orderPrice, int orderCount, int subtotal) throws Exception{
+        // ナンバーフォーマット
+        NumberFormat nfCur = NumberFormat.getCurrencyInstance();  
+        
+        // カラーコード用
+        DatabeseAccess colorDa = new DatabeseAccess();
+        colorDa.open();
+    
+        // カラーコードプルダウン生成
+        String colorCdSql = "select p.COLOR_CODE, c.COLOR "
+                + "from PRODUCTS p, COLORS c "
+                + "where p.COLOR_CODE = c.COLOR_CODE "
+                + "and p.DELETE_FLAG = false "
+                + "and p.PRODUCT_CODE = '" + productCode + "' ";
+
+        ResultSet colorCdRs = colorDa.getResultSet(colorCdSql);
+
+        // プルダウン生成
+        String colorPulldown = "<select name=\"color\" class=\"form-control-sm colorPull\"> ";
+        colorPulldown += "<option value=\"\" selected>選択</option>";                    
+        while(colorCdRs.next()){
+            colorPulldown += "<option value=\"" + colorCdRs.getString("COLOR_CODE") + "\" ";
+            if(colorCode.equals(colorCdRs.getString("COLOR_CODE"))){
+                colorPulldown += "selected "; // 一致するものがあれば選択状態にする
+            }
+            colorPulldown += ">" + colorCdRs.getString("COLOR") + "</option>";                                        
+        }
+        colorPulldown += "</select>";
+
+
+        // テーブル用HTMLを作成する
+        String detailHTML = "<tr>" 
+            + "<td><input type=\"checkbox\" class=\"form-control form-control-sm\" id=\"proDel\"></td>"
+            + "<td>" + productCode + "</td>"
+            + "<td>"+ productName + "</td>"
+            + "<td>"+ colorPulldown + "</td>"
+            + "<td>"+ stock + "</td>"
+            + "<td class=\"text-right\">"+ nfCur.format(orderPrice) + "</td>"
+            + "<td><input type=\"text\" class=\"form-control form-control-sm productCount\" value=\"" + orderCount + "\"></td>"
+            + "<td class=\"text-right\">"+ nfCur.format(subtotal) + "</td>"
+            + "</tr>";            
+
+        colorDa.close();
+
+        return detailHTML;
+    }
+%>    
 <%
     
     // DB接続    
     DatabeseAccess da = new DatabeseAccess();
     da.open();
-    // カラーコード用
-    DatabeseAccess colorDa = new DatabeseAccess();
-    colorDa.open();
     
     // ナンバーフォーマット
     NumberFormat nfCur = NumberFormat.getCurrencyInstance();  
@@ -46,13 +92,19 @@
     
     // 受注番号の取得
     String orderCode = (String) request.getParameter("orderCode");        
-    if(orderCode == null || orderCode == ""){
+    if(orderCode == null || orderCode.equals("")){
         // 新規登録
         orderCode = "";
         // 受注番号：空白、部署・受注者はログインユーザの情報を表示
         orderUserName = username;
         
-        
+        // 部署名取得
+        String deptSql = "select DEPARTMENT_NAME from DEPARTMENTS where DELETE_FLAG = 0 and DEPARTMENT_CODE = '" + (String) session.getAttribute("DepartmentCode") + "'";
+        ResultSet rs = da.getResultSet(deptSql);
+        while(rs.next()){
+            departmentName = rs.getString("DEPARTMENT_NAME");
+        }
+
         // 登録ボタン表示
         buttonHTML += "<div class=\"col-auto\"> "
                     + "<input type=\"button\" class=\"btn btn-secondary\" id=\"insertButton\" value=\"登録\"> "
@@ -60,9 +112,9 @@
         
         // 税率マスタから現在日付の税率を取得
         String taxSql = "select TAX from TAXS where TAX_START <= CURDATE()  order by TAX_START";
-        ResultSet taxRs = da.getResultSet(taxSql);
-        while(taxRs.next()){
-            tax = taxRs.getInt("TAX")/100.0;
+        rs = da.getResultSet(taxSql);
+        while(rs.next()){
+            tax = rs.getInt("TAX")/100.0;
         }
 
 
@@ -115,7 +167,7 @@
             String detailCode = rs.getString("DETAIL_CODE");
             String productCode = rs.getString("PRODUCT_CODE");
             String productName = rs.getString("PRODUCT_NAME");
-            String color_code = rs.getString("COLOR_CODE");
+            String colorCode = rs.getString("COLOR_CODE");
             int stock = rs.getInt("STOCK") - rs.getInt("ALLOCATION");
             int orderPrice = rs.getInt("ORDER_PRICE");
             int orderCount = rs.getInt("ORDER_COUNT");
@@ -125,38 +177,9 @@
             taxSum += subtotal * tax;
             total += subtotal + subtotal * tax;
             
-            // カラーコードプルダウン生成
-            String colorCdSql = "select p.COLOR_CODE, c.COLOR "
-                    + "from PRODUCTS p, COLORS c "
-                    + "where p.COLOR_CODE = c.COLOR_CODE "
-                    + "and p.DELETE_FLAG = false "
-                    + "and p.PRODUCT_CODE = '" + productCode + "' ";
-            
-            ResultSet colorCdRs = colorDa.getResultSet(colorCdSql);
-
-            String colorPulldown = "<select name=\"color\" class=\"form-control-sm colorPull\"> ";
-            colorPulldown += "<option value=\"\" selected>選択</option>";                    
-            while(colorCdRs.next()){
-                if(color_code.equals(colorCdRs.getString("COLOR_CODE"))){
-                    colorPulldown += "<option value=\"" + colorCdRs.getString("COLOR_CODE") + "\" selected>" + colorCdRs.getString("COLOR") + "</option>";                    
-                }else{
-                    colorPulldown += "<option value=\"" + colorCdRs.getString("COLOR_CODE") + "\">" + colorCdRs.getString("COLOR") + "</option>";                                        
-                }
-            }
-            colorPulldown += "</select>";
-            
-
             // テーブル用HTMLを作成する
-            detailHTML += "<tr>" 
-                + "<td><input type=\"checkbox\"  class=\"form-control form-control-sm\" id=\"proDel\"></td>"
-                + "<td>" + productCode + "</td>"
-                + "<td>"+ productName + "</td>"
-                + "<td>"+ colorPulldown + "</td>"
-                + "<td>"+ stock + "</td>"
-                + "<td class=\"text-right\">"+ nfCur.format(orderPrice) + "</td>"
-                + "<td><input type=\"text\" class=\"form-control form-control-sm productCount\" value=\"" + orderCount + "\"></td>"
-                + "<td class=\"text-right\">"+ nfCur.format(subtotal) + "</td>"
-                + "</tr>";            
+            detailHTML += detailHtmlCreate(productCode,productName,colorCode,stock,orderPrice,orderCount,subtotal);
+
         }
         
         // 合計値フォーマット
@@ -173,10 +196,60 @@
 
     }
     
-    // MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO MEMO
     // クッキーからの情報を表示（新規追加したが検索などの画面遷移をしたとき用）
+    // クッキーを保存するタイミングは商品検索ボタン、取引先検索ボタン押下時
+    Cookie[] cookies = request.getCookies();
+    for (Cookie cookie : cookies) {
+
+        // 商品新規行
+        if(cookie.getName().equals("newProRow")){
+            // エンコードされて渡されるのでデコード処理
+            String decodedResult = URLDecoder.decode(cookie.getValue(), "UTF-8");
+            
+            JsonReader reader = Json.createReader(new StringReader(decodedResult));
+            // Jsonの配列を取得
+            JsonArray jsonArray = reader.readArray();            
+            for(int i=0; i<jsonArray.size(); i++){
+                JsonObject jsonObj = jsonArray.getJsonObject(i);
+
+                // テーブル用HTMLを作成する
+                detailHTML += detailHtmlCreate(jsonObj.getString("productCode",""),
+                                               jsonObj.getString("productName",""),
+                                               jsonObj.getString("colorCode",""),
+                                               jsonObj.getInt("stock",0),
+                                               jsonObj.getInt("price",0),
+                                               jsonObj.getInt("productCount",0),
+                                               jsonObj.getInt("subtotal",0));
+            }
+        }
+
+        // 取引先コード
+        if(cookie.getName().equals("newSupplier")){
+            // エンコードされて渡されるのでデコード処理
+            String decodedResult = URLDecoder.decode(cookie.getValue(), "UTF-8");
+            supplierCode = decodedResult;
+        }        
+        // 取引先名
+        if(cookie.getName().equals("newSupplierName")){
+            // エンコードされて渡されるのでデコード処理
+            String decodedResult = URLDecoder.decode(cookie.getValue(), "UTF-8");
+            supplierName = decodedResult;
+        }        
+    }
+
     // 処理終わればクッキー削除
-    // クッキーを保尊するタイミングは商品検索ボタン、取引先検索ボタン押下時
+    Cookie cookie = new Cookie("newProRow", "");
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
+    
+    cookie = new Cookie("newSupplier", "");
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
+    
+    cookie = new Cookie("newSupplierName", "");
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
+    
     
     // 商品検索画面から戻ってきたとき
     String productSearchCode = (String) request.getParameter("productCode");
@@ -186,43 +259,13 @@
         String productSearchColor = (String) request.getParameter("colorCode");
         int productSearchStock = Integer.parseInt(request.getParameter("stock"));
         int productSearchPrice = Integer.parseInt(request.getParameter("price"));
-                
-        // カラーコードプルダウン生成
-        String colorCdSql = "select p.COLOR_CODE, c.COLOR "
-                + "from PRODUCTS p, COLORS c "
-                + "where p.COLOR_CODE = c.COLOR_CODE "
-                + "and p.DELETE_FLAG = false "
-                + "and p.PRODUCT_CODE = '" + productSearchCode + "' ";
-
-        ResultSet colorCdRs = colorDa.getResultSet(colorCdSql);
-
-        String colorPulldown = "<select name=\"color\" class=\"form-control-sm colorPull\"> ";
-        colorPulldown += "<option value=\"\" selected>選択</option>";                    
-        while(colorCdRs.next()){
-            if(productSearchColor.equals(colorCdRs.getString("COLOR_CODE"))){
-                colorPulldown += "<option value=\"" + colorCdRs.getString("COLOR_CODE") + "\" selected>" + colorCdRs.getString("COLOR") + "</option>";                    
-            }else{
-                colorPulldown += "<option value=\"" + colorCdRs.getString("COLOR_CODE") + "\">" + colorCdRs.getString("COLOR") + "</option>";                                        
-            }
-        }
-        colorPulldown += "</select>";
-
+        
         // テーブル用HTMLを作成する
-        detailHTML += "<tr>" 
-            + "<td><input type=\"checkbox\"  class=\"form-control form-control-sm\" id=\"proDel\"></td>"
-            + "<td>" + productSearchCode + "</td>"
-            + "<td>"+ productSearchName + "</td>"
-            + "<td>"+ colorPulldown + "</td>"
-            + "<td>"+ productSearchStock + "</td>"
-            + "<td class=\"text-right\">"+ nfCur.format(productSearchPrice) + "</td>"
-            + "<td><input type=\"text\" class=\"form-control form-control-sm productCount\" value=\"\"></td>"
-            + "<td class=\"text-right\">"+ nfCur.format(0) + "</td>"
-            + "</tr>";            
+        detailHTML += detailHtmlCreate(productSearchCode,productSearchName,productSearchColor,productSearchStock,productSearchPrice,0,0);
         
     }
 
     // DBクローズ
-    colorDa.close();
     da.close();
 
 %>
