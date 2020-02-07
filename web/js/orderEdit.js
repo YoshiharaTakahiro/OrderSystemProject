@@ -169,7 +169,7 @@ $(function () {
 
                 // オブジェクト生成
                 var checkBoxObj = "<td><input type=\"checkbox\"  class=\"form-control form-control-sm\" id=\"proDel\"></td>";
-                var textBoxObj = "<input type=\"text\" class=\"form-control form-control-sm productCount\" value=\"\">";
+                var textBoxObj = "<input type=\"text\" class=\"form-control form-control-sm productCount\" value=\"0\">";
                 
                 var pulldownObj = "<select name=\"color\" class=\"form-control-sm colorPull\"> <option value=\"\" selected>選択</option> "
                 for( var i=0; i<productInfo.colors.length; i++){                    
@@ -204,41 +204,57 @@ $(function () {
         $("#addProductCode").val("");
         
     });
+    
+    // 商品情報をJSONにする
+    var productJsonCreate = function(){
 
-    // 登録ボタン処理
-    $("#insertButton").click( function() {
-                
         // 明細情報取得
         var table = document.getElementById('orderDetailTable');
         var rows = table.rows.length; // 行数
-        
+
         // パラメータ作成
         var parameterJson = [];
         
-        var test = document.getElementById('orderCode');
-        
-        test.value = "";
         // rows-3:新規行、税率行、合計行を除いた行
         for(var i=1; i<rows-3; i++){
             
             var delFlg = table.rows[i].cells[0].children[0].checked;      // 削除フラグ
             var productCode = table.rows[i].cells[1].innerText;           // 商品コード
+            var productName = table.rows[i].cells[2].innerText;           // 商品名
             var colorCode = table.rows[i].cells[3].children[0].value;     // カラーコード
+            var stock = Number(table.rows[i].cells[4].innerText);                 // 在庫数
             var price = Number(table.rows[i].cells[5].innerText.replace(/,/g, '').substring(1));;   // 価格
-            var productCount = table.rows[i].cells[6].children[0].value;  // 個数
+            var productCount = Number(table.rows[i].cells[6].children[0].value);  // 個数
+            var subtotal = Number(table.rows[i].cells[7].innerText.replace(/,/g, '').substring(1));;   // 小計
             
             var productJson = {
                 delFlg : delFlg,
                 productCode : productCode,
+                productName : productName,
                 colorCode : colorCode,
+                stock : stock,
                 price : price,
-                productCount : productCount
+                productCount : productCount,
+                subtotal : subtotal
             };
             
             parameterJson[i-1] = productJson;
 
         }
-         
+        
+        return parameterJson;
+        
+    }
+    
+
+    // 登録ボタン処理
+    $("#insertButton").click( function() {
+        
+        var productJson = productJsonCreate();
+        if(productJson.length == 0 ){
+            return;
+        }
+                
         // 受注登録処理呼出
         var form = document.createElement('form');
         var request = document.createElement('input');
@@ -248,20 +264,33 @@ $(function () {
 
         request.type = 'hidden'; //入力フォームが表示されないように
         request.name = 'parameterJson';
-        request.value = JSON.stringify(parameterJson);
+        request.value = JSON.stringify(productJson);
 
         form.appendChild(request);
         document.body.appendChild(form);
 
         form.submit();
         
-        test.value = JSON.stringify(parameterJson);
-        
     });
+    
     
     // 商品検索ボタン
     $("#searchProductBt").click( function() {
         
+        // 取引先コードをクッキーに保存
+        if($("#supplierCode").val() != ""){
+            document.cookie = 'newSupplier=' + encodeURIComponent($("#supplierCode").val());
+            document.cookie = 'newSupplierName=' + encodeURIComponent($("#supplierName").val());            
+        }
+        
+        // 新規追加行の情報をクッキーに保存
+        var productJson = productJsonCreate();
+        if(productJson.length != 0 ){
+            // JSON形式かつ特殊文字をエンコードしてクッキーに保存
+            document.cookie = 'newProRow=' + encodeURIComponent(JSON.stringify(productJson));
+        }
+        
+        // 検索画面に渡すパラメータの設定
         var form = document.createElement('form');
         
         form.method = 'POST';
@@ -287,9 +316,6 @@ $(function () {
         form.submit();
         
     });
-    
-    
-    
     
 });
 

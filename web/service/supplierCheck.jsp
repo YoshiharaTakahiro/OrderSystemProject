@@ -6,7 +6,7 @@
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="java.sql.*, mydb.DatabeseAccess" %>
-<%@page import="java.io.*, java.util.*"%>
+<%@page import="java.io.*, java.util.*, javax.json.*"%>
 <%
     
     // 取引先コード取得
@@ -16,8 +16,8 @@
     DatabeseAccess da = new DatabeseAccess();
     da.open();
     
-    // Jsonデータ
-    String resJson = "";
+    // Jsonオブジェクトビルダー
+    JsonObjectBuilder JsonObjB = Json.createObjectBuilder();
 
     // 取引先情報取得
     String suppliersSql = "select s.SUPPLIER_CODE, s.SUPPLIER_NAME "
@@ -29,16 +29,22 @@
     
     // Json生成
     if(rs.next()){
-        resJson += "{\"supplierCode\":\"" + rs.getString("SUPPLIER_CODE") + "\",";
-        resJson += "\"supplierName\":\"" + rs.getString("SUPPLIER_NAME") + "\"}";        
+        JsonObjB.add("supplierCode", rs.getString("SUPPLIER_CODE"));        
+        JsonObjB.add("supplierName", rs.getString("SUPPLIER_NAME"));        
     }
         
-    System.out.println(resJson);
+    // 文字列に変換
+    String jsonString;
+    Writer writer = new StringWriter();
+    Json.createWriter(writer).write(JsonObjB.build());
+    jsonString = writer.toString();
+    
+    System.out.println(jsonString);
     
     response.setContentType("application/json;charset=UTF-8");
     
     PrintWriter pw = response.getWriter();// pwオブジェクト
-    pw.print(resJson); // 出力
+    pw.print(jsonString); // 出力
     pw.close();
 
 %>
