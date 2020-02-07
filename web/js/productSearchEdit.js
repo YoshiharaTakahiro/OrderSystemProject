@@ -28,7 +28,9 @@ $(function () {
 		productCode = table.rows[i].cells[1].innerText;		// 商品コード
 		productName = table.rows[i].cells[2].innerText;		// 商品名
 		colorCode = table.rows[i].cells[4].innerText;		// カラーコード
-		price = Number(table.rows[i].cells[8].innerText);	// 価格
+		var wk = table.rows[i].cells[8].innerText;		// 価格
+                wk = wk.replace(/,/g, '');				// カンマ削除
+                price = wk.replace(/￥/g, '');				// ￥削除
 		stock = table.rows[i].cells[9].innerText;		// 個数
 
 		break;
