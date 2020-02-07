@@ -10,6 +10,7 @@
 <%!
 //---------------------------------------------------------------
 //汎用マスタープルダウンのHTMLを作成するメソッド
+// queryにある項目は"selected"を付ける
 // 引数：String division = 区分
 //	String queryStr = 受信したクエリ
 //	String optionStr = "htmlの文字列を入れる変数
@@ -137,7 +138,8 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 
     //複合条件の場合はAND検索をする
     if(!queryBrand.equals(""))	sql += "and BRAND=" + "\'" + queryBrand + "\' ";
-    if(!queryColor.equals(""))	sql += "and COLOR_CODE=" + "\'" + queryColor + "\' ";
+//    if(!queryColor.equals(""))	sql += "and COLOR_CODE=" + "\'" + queryColor + "\' ";
+    if(!queryColor.equals(""))	sql += "and COLOR_CODE " + "like " + "\'" + queryColor + "%\' ";
     if(!queryClass.equals(""))	sql += "and CLASS=" + "\'" + queryClass + "\' ";
     if(!queryType.equals(""))	sql += "and TYPE=" + "\'" + queryType + "\' ";
     if(!queryJanCode.equals("")) sql += "and JANCODE=" + "\'" + queryJanCode + "\' ";
@@ -153,7 +155,8 @@ String doPullDownMake(String division, String queryStr, String optionStr){
         cnt = rsCnt.getString("PRODUCT_CODE");
     }
     
-    sql += "order by PRODUCT_CODE, PRODUCT_NAME limit " + DISP_NUM + " ";
+//    sql += "order by PRODUCT_CODE, PRODUCT_NAME limit " + DISP_NUM + " ";
+    sql += "order by PRODUCT_CODE, COLOR_CODE limit " + DISP_NUM + " ";
 
     if(querySubmitBtn.equals("forward")){
 	if(Integer.parseInt(cnt) > offsetNum + DISP_NUM){
@@ -211,9 +214,10 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 
 	//カラーコードから名称を求める
         String color = rs.getString("COLOR_CODE");	    // カラー
-	grs = dga.getResultSet("select * from generals where DIVISION='COR'and GENERAL_CODE=" + "\"" + color + "\"" + ";");
+//	grs = dga.getResultSet("select * from generals where DIVISION='COR'and GENERAL_CODE=" + "\"" + color + "\"" + ";");
+	grs = dga.getResultSet("select * from colors where COLOR_CODE=" + color + ";");
 	if(grs.next()) {
-	    color = grs.getString("GENERAL_NAME");  //対応する名称があれば取得する。無ければコードのまま。
+	    color = grs.getString("COLOR");  //対応する名称があれば取得する。無ければコードのまま。
 	}
 	
 	//クラスコードから名称を求める
@@ -248,7 +252,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	    + "<td>"+ classCd + "</td>"
 	    + "<td>"+ type + "</td>"
 	    + "<td>"+ size + "</td>"
-	    + "<td>"+ price + "</td>"
+	    + "<td>"+ "￥" + String.format("%,d", Integer.parseInt(price)) + "</td>"
 	    + "<td>"+ stock + "</td>"
 	    + "<td>"+ materialFront + "</td>"
 	    + "<td>"+ materialInside + "</td>"
@@ -273,8 +277,8 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	queryJanCode.equals("")) {
        
 //kari
-//	tableHTML = "";		//テーブルを非表示にする
-//	daialogMsg = "window.alert(\"検索条件を入力してください。\")";
+	//tableHTML = "";		//テーブルを非表示にする
+	//daialogMsg = "window.alert(\"検索条件を入力してください。\")";
     } 
 
 %>
@@ -401,3 +405,4 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	
     </body>
 </html>
+0
