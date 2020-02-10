@@ -16,7 +16,7 @@ $(function () {
         var rows = table.rows.length;	    // 行数
 	var productCode = '';		    // 商品コード
 	var productName = '';		    // 商品名
-	var colorCode = '';		    // カラーコード
+	var color = '';		    // カラーコード
 	var price = '';			    // 価格
 	var stock = '';			    // 個数
 
@@ -27,7 +27,7 @@ $(function () {
 	    if(selFlg) {
 		productCode = table.rows[i].cells[1].innerText;		// 商品コード
 		productName = table.rows[i].cells[2].innerText;		// 商品名
-		colorCode = table.rows[i].cells[4].innerText;		// カラーコード
+		color = table.rows[i].cells[4].innerText;		// カラーコード
 		var wk = table.rows[i].cells[8].innerText;		// 価格
                 wk = wk.replace(/,/g, '');				// カンマ削除
                 price = wk.replace(/￥/g, '');				// ￥削除
@@ -62,8 +62,8 @@ $(function () {
 	//返却するデータを作成する
 	var request3 = document.createElement('input');
 	request3.type = 'hidden'; //入力フォームが表示されないように
-	request3.name = 'colorCode';
-	request3.value = colorCode;
+	request3.name = 'color';
+	request3.value = color;
 	form.appendChild(request3);
 
 	//返却するデータを作成する
