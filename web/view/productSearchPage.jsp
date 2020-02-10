@@ -196,11 +196,26 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 
     tableHTML += "<tbody>";
     
+    // 検索条件が無い時は検索結果を表示しない
+    boolean seachDispEn = true;
+
+    if(queryProductCode.equals("") &&
+	queryProductName.equals("") && 
+	queryBrand.equals("") && 
+	queryColor.equals("") && 
+	queryClass.equals("") && 
+	queryType.equals("") && 
+	queryJanCode.equals("")) {
+       
+	seachDispEn = false;
+	//daialogMsg = "window.alert(\"検索条件を入力してください。\")";
+    } 
+
     //検索件数を初期化する
     numOfSearch = 0;
     
     // テーブルの中身を作成する
-    while(rs.next()) {
+    while(rs.next() && seachDispEn) {
 	numOfSearch++;	//検索件数をカウントする
         String productCode = rs.getString("PRODUCT_CODE");  // 商品コード
         String productName = rs.getString("PRODUCT_NAME");  // 商品名
@@ -266,20 +281,6 @@ String doPullDownMake(String division, String queryStr, String optionStr){
     // データベースへのコネクションを閉じる
     da.close();
     dga.close();
-    
-    // ダイアログメッセージ作成
-    if(queryProductCode.equals("") &&
-	queryProductName.equals("") && 
-	queryBrand.equals("") && 
-	queryColor.equals("") && 
-	queryClass.equals("") && 
-	queryType.equals("") && 
-	queryJanCode.equals("")) {
-       
-//kari
-	//tableHTML = "";		//テーブルを非表示にする
-	//daialogMsg = "window.alert(\"検索条件を入力してください。\")";
-    } 
 
 %>
 
@@ -405,4 +406,3 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	
     </body>
 </html>
-0
