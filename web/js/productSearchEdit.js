@@ -16,13 +16,14 @@ $(function () {
         var rows = table.rows.length;	    // 行数
 	var productCode = '';		    // 商品コード
 	var productName = '';		    // 商品名
-	var color = '';		    // カラーコード
+	var color = '';			    // カラーコード
 	var price = '';			    // 価格
 	var stock = '';			    // 個数
+	var selFlg = false;		    // 選択フラグ
 
 	// ラジオボタンが選択されている行のデータを抜き出す
 	for(var i=1; i<rows; i++){
-	    var selFlg = table.rows[i].cells[0].children[0].checked;		// 選択フラグ
+	    selFlg = table.rows[i].cells[0].children[0].checked;	// 選択フラグ
 
 	    if(selFlg) {
 		productCode = table.rows[i].cells[1].innerText;		// 商品コード
@@ -36,57 +37,64 @@ $(function () {
 		break;
 	    }
 	}
+	
+	//何も選択されていない場合の処理を追加
+	if(selFlg) {
 
-        // 受注登録処理呼出
-	var form = document.createElement('form');
+	    // 受注登録処理呼出
+	    var form = document.createElement('form');
 
-	form.method = 'POST';
-//	form.action = './orderEditPage.jsp';	    //仮
-	form.action = document.getElementById("tmp_value1").value;
-	document.body.appendChild(form);
+	    form.method = 'POST';
+//	    form.action = './orderEditPage.jsp';	    //仮
+	    form.action = document.getElementById("tmp_value1").value;
+	    document.body.appendChild(form);
 
-	//返却するデータを作成する
-	var request1 = document.createElement('input');
-	request1.type = 'hidden'; //入力フォームが表示されないように
-	request1.name = 'productCode';
-	request1.value = productCode;
-	form.appendChild(request1);
+	    //返却するデータを作成する
+	    var request1 = document.createElement('input');
+	    request1.type = 'hidden'; //入力フォームが表示されないように
+	    request1.name = 'productCode';
+	    request1.value = productCode;
+	    form.appendChild(request1);
 
-	//返却するデータを作成する
-	var request2 = document.createElement('input');
-	request2.type = 'hidden'; //入力フォームが表示されないように
-	request2.name = 'productName';
-	request2.value = productName;
-	form.appendChild(request2);
+	    //返却するデータを作成する
+	    var request2 = document.createElement('input');
+	    request2.type = 'hidden'; //入力フォームが表示されないように
+	    request2.name = 'productName';
+	    request2.value = productName;
+	    form.appendChild(request2);
 
-	//返却するデータを作成する
-	var request3 = document.createElement('input');
-	request3.type = 'hidden'; //入力フォームが表示されないように
-//	request3.name = 'color';
-	request3.name = 'colorCode';
-	request3.value = color;
-	form.appendChild(request3);
+	    //返却するデータを作成する
+	    var request3 = document.createElement('input');
+	    request3.type = 'hidden'; //入力フォームが表示されないように
+//kari	    request3.name = 'color';
+	    request3.name = 'colorCode';
+	    request3.value = color;
+	    form.appendChild(request3);
 
-	//返却するデータを作成する
-	var request4 = document.createElement('input');
-	request4.type = 'hidden'; //入力フォームが表示されないように
-	request4.name = 'stock';
-	request4.value = stock;
-	form.appendChild(request4);
+	    //返却するデータを作成する
+	    var request4 = document.createElement('input');
+	    request4.type = 'hidden'; //入力フォームが表示されないように
+	    request4.name = 'stock';
+	    request4.value = stock;
+	    form.appendChild(request4);
 
-	//返却するデータを作成する
-	var request5 = document.createElement('input');
-	request5.name = 'price';
-	request5.value = price;
-	form.appendChild(request5);
+	    //返却するデータを作成する
+	    var request5 = document.createElement('input');
+	    request5.name = 'price';
+	    request5.value = price;
+	    form.appendChild(request5);
 
-	//返却するデータを作成する
-	var request6 = document.createElement('input');
-	request6.name = 'orderCode';
-	request6.value = document.getElementById("tmp_value2").value;
-	form.appendChild(request6);
+	    //返却するデータを作成する
+	    var request6 = document.createElement('input');
+	    request6.name = 'orderCode';
+	    request6.value = document.getElementById("tmp_value2").value;
+	    form.appendChild(request6);
+	    form.submit();
+	    
+	} else {
+	    alert('商品を選択してください。');
+	}
 
-	form.submit();
         
     });
 });

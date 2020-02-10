@@ -205,10 +205,14 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	queryColor.equals("") && 
 	queryClass.equals("") && 
 	queryType.equals("") && 
-	queryJanCode.equals("")) {
+	queryJanCode.equals("") ) {
        
 	seachDispEn = false;
-	//daialogMsg = "window.alert(\"検索条件を入力してください。\")";
+	offsetNum = 0;		    //検索条件が無い時は初期化する
+	
+	if(!querySubmitBtn.equals("")) {
+	    daialogMsg = "window.alert(\"検索条件を入力してください。\")";
+	}
     } 
 
     //検索件数を初期化する
@@ -367,7 +371,8 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 			    <button class="btn btn-link" type="submit" name="submitBtn"  value="back">＜前</button>
 			    <label for="inputType" class="col-form-label col-auto"><%= offsetNum / DISP_NUM + 1 %></label>
 			    <button class="btn btn-link" type="submit" name="submitBtn" value="forward">次＞</button>
-			    <button class="ml-sm-3 btn btn-secondary" type="submit">検索</button>
+			    <!-- <button class="ml-sm-3 btn btn-secondary" type="submit">検索</button> -->
+			    <button class="ml-sm-3 btn btn-secondary" type="submit" name="submitBtn" value="do">検索</button>
 			</div>
 		    </div>
 		</div>
@@ -384,13 +389,12 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 			
 			<!-- 選択ボタン -->
 			<!-- <button class="ml-sm-3 btn btn-secondary" type="submit" name="submitBtn" value="selection">選択</button> -->
-			<!-- <input class="ml-sm-3 btn btn-secondary" type="button" onclick="location.href='<%= queryPageId %>'" value="選択"> -->
+			<!-- <input class="ml-sm-3 btn btn-secondary" type="button" id="selectButton" value="選択"> -->
 			<input class="ml-sm-3 btn btn-secondary" type="button" id="selectButton" value="選択">
 		    
 		    </div>
 		</div>
 		    
-		<!-- 検索条件なしの時のエラーダイアログ表示
 		<script>
 		    <%= daialogMsg %>
 		</script>
