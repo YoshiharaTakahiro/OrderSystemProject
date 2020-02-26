@@ -22,12 +22,11 @@
     DatabeseAccess da = new DatabeseAccess();
     da.open();
     
-    String sql = "select USER_NAME, POSITION from users "
+    String sql = "select USER_NAME, POSITION, DEPARTMENT_CODE from users "
                + "where USER_CODE = '" + userId + "' "
                + "and   PASSWORD = '" + password + "' "
                + "and   DELETE_FLAG = 0"; 
-    ResultSet rs = da.getResultSet(sql);
-    
+    ResultSet rs = da.getResultSet(sql);    
     
     if(rs.next()){
 
@@ -35,6 +34,7 @@
         session.setAttribute("UserId", userId);
         session.setAttribute("UserName", rs.getString("USER_NAME"));
         session.setAttribute("Position", rs.getString("POSITION"));
+        session.setAttribute("DepartmentCode", rs.getString("DEPARTMENT_CODE"));
         
         // トップページにリダイレクト(遷移)
         response.sendRedirect("../view/toppage.jsp");
