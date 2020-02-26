@@ -64,8 +64,8 @@ $(function () {
 	    //返却するデータを作成する
 	    var request3 = document.createElement('input');
 	    request3.type = 'hidden'; //入力フォームが表示されないように
-//kari	    request3.name = 'color';
-	    request3.name = 'colorCode';
+	    request3.name = 'color';
+//	    request3.name = 'colorCode';
 	    request3.value = color;
 	    form.appendChild(request3);
 
