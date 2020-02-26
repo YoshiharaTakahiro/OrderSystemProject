@@ -132,10 +132,9 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 
     //商品コード、商品名： 部分一致
     sql += "where PRODUCT_CODE " + "like " + "\'%" + queryProductCode + "%\' ";
-
-    //ブランド、カラー、クラス、分類   ： 選択された値のコード値
     sql += "and PRODUCT_NAME " + "like " + "\'%" + queryProductName + "%\' ";
 
+    //ブランド、カラー、クラス、分類   ： 選択された値のコード値
     //複合条件の場合はAND検索をする
     if(!queryBrand.equals(""))	sql += "and BRAND=" + "\'" + queryBrand + "\' ";
 //    if(!queryColor.equals(""))	sql += "and COLOR_CODE=" + "\'" + queryColor + "\' ";
@@ -321,8 +320,10 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	<h3 class="text-center mt-sm-4">商品検索</h3>
 	<div class="container"><!-- container：箱 -->
 	    <form action="productSearchPage.jsp" method="post">
+		<!-- del
 		<INPUT TYPE='hidden' NAME='abc' VALUE='1234'>
 		<INPUT TYPE='hidden' NAME='def' VALUE='5678'>
+		-->
 
 		<div class="row form-group" ><!-- row：1行目 -->
 		    <div class="col-auto">
