@@ -10,6 +10,7 @@
 <%!
 //---------------------------------------------------------------
 //汎用マスタープルダウンのHTMLを作成するメソッド
+// queryにある項目は"selected"を付ける
 // 引数：String division = 区分
 //	String queryStr = 受信したクエリ
 //	String optionStr = "htmlの文字列を入れる変数
@@ -40,8 +41,11 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	    optionStr += ">" + genName + "</option>";
 	}
 
+	da.close();
+
     } catch (Exception e) {
     }
+    
     
     optionStr += "</select>";  
     return optionStr;
@@ -65,7 +69,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
     String queryJanCode = request.getParameter("inputJanCode");
     String querySubmitBtn = request.getParameter("submitBtn");
     String queryPageIdTmp = request.getParameter("pageId");
-    String queryOrderNoTmp = request.getParameter("orderNo");
+    String queryOrderCodeTmp = request.getParameter("orderCode");
 
     //クエリ情報がなかった時は""に置き換える
     if(queryProductCode == null) queryProductCode = "";
@@ -82,20 +86,23 @@ String doPullDownMake(String division, String queryStr, String optionStr){
     }
 
     if(queryPageIdTmp == null) queryPageIdTmp = "";
-    if(queryOrderNoTmp == null) queryOrderNoTmp = "";
+    if(queryOrderCodeTmp == null) queryOrderCodeTmp = "";
 
     //戻り先URLを作成する
     if(!queryPageIdTmp.equals("")) {
         queryPageId = "./" + queryPageIdTmp;
     }
 
-    //戻すorderNoを作成する
-    if(!queryOrderNoTmp.equals("")) {
-        queryOrderNo = queryOrderNoTmp;
+    //戻すorderCodeを作成する
+    if(!queryOrderCodeTmp.equals("")) {
+        queryOrderCode = queryOrderCodeTmp;
     }
 
     DatabeseAccess da = new DatabeseAccess();
     da.open();
+
+    DatabeseAccess dga = new DatabeseAccess();
+    dga.open();
 
     //-------------------ブランド選択肢を作成する----------------------------
     String optionStr = "<select name=\"brand\" class=\"minimal\">";//★
@@ -125,13 +132,13 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 
     //商品コード、商品名： 部分一致
     sql += "where PRODUCT_CODE " + "like " + "\'%" + queryProductCode + "%\' ";
-
-    //ブランド、カラー、クラス、分類   ： 選択された値のコード値
     sql += "and PRODUCT_NAME " + "like " + "\'%" + queryProductName + "%\' ";
 
+    //ブランド、カラー、クラス、分類   ： 選択された値のコード値
     //複合条件の場合はAND検索をする
     if(!queryBrand.equals(""))	sql += "and BRAND=" + "\'" + queryBrand + "\' ";
-    if(!queryColor.equals(""))	sql += "and COLOR_CODE=" + "\'" + queryColor + "\' ";
+//    if(!queryColor.equals(""))	sql += "and COLOR_CODE=" + "\'" + queryColor + "\' ";
+    if(!queryColor.equals(""))	sql += "and COLOR_CODE " + "like " + "\'" + queryColor + "%\' ";
     if(!queryClass.equals(""))	sql += "and CLASS=" + "\'" + queryClass + "\' ";
     if(!queryType.equals(""))	sql += "and TYPE=" + "\'" + queryType + "\' ";
     if(!queryJanCode.equals("")) sql += "and JANCODE=" + "\'" + queryJanCode + "\' ";
@@ -147,7 +154,8 @@ String doPullDownMake(String division, String queryStr, String optionStr){
         cnt = rsCnt.getString("PRODUCT_CODE");
     }
     
-    sql += "order by PRODUCT_CODE, PRODUCT_NAME limit " + DISP_NUM + " ";
+//    sql += "order by PRODUCT_CODE, PRODUCT_NAME limit " + DISP_NUM + " ";
+    sql += "order by PRODUCT_CODE, COLOR_CODE limit " + DISP_NUM + " ";
 
     if(querySubmitBtn.equals("forward")){
 	if(Integer.parseInt(cnt) > offsetNum + DISP_NUM){
@@ -187,18 +195,63 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 
     tableHTML += "<tbody>";
     
+    // 検索条件が無い時は検索結果を表示しない
+    boolean seachDispEn = true;
+
+    if(queryProductCode.equals("") &&
+	queryProductName.equals("") && 
+	queryBrand.equals("") && 
+	queryColor.equals("") && 
+	queryClass.equals("") && 
+	queryType.equals("") && 
+	queryJanCode.equals("") ) {
+       
+	seachDispEn = false;
+	offsetNum = 0;		    //検索条件が無い時は初期化する
+	
+	if(!querySubmitBtn.equals("")) {
+	    daialogMsg = "window.alert(\"検索条件を入力してください。\")";
+	}
+    } 
+
     //検索件数を初期化する
     numOfSearch = 0;
     
     // テーブルの中身を作成する
-    while(rs.next()) {
+    while(rs.next() && seachDispEn) {
 	numOfSearch++;	//検索件数をカウントする
         String productCode = rs.getString("PRODUCT_CODE");  // 商品コード
         String productName = rs.getString("PRODUCT_NAME");  // 商品名
+
+	//ブランドコードから名称を求める
         String brand = rs.getString("BRAND");		    // ブランド
+	ResultSet grs = dga.getResultSet("select * from generals where DIVISION='BLD'and GENERAL_CODE=" + "\"" + brand  + "\"" + ";");
+	if(grs.next()) {
+	    brand = grs.getString("GENERAL_NAME");  //対応する名称があれば取得する。無ければコードのまま。
+	}
+
+	//カラーコードから名称を求める
         String color = rs.getString("COLOR_CODE");	    // カラー
-        String classCd = rs.getString("CLASS");		    // クラス
-        String type = rs.getString("TYPE");		    // 分類
+//	grs = dga.getResultSet("select * from generals where DIVISION='COR'and GENERAL_CODE=" + "\"" + color + "\"" + ";");
+	grs = dga.getResultSet("select * from colors where COLOR_CODE=" + color + ";");
+	if(grs.next()) {
+	    color = grs.getString("COLOR");  //対応する名称があれば取得する。無ければコードのまま。
+	}
+	
+	//クラスコードから名称を求める
+	String classCd = rs.getString("CLASS");		    // クラス
+	grs = dga.getResultSet("select * from generals where DIVISION='CLS'and GENERAL_CODE=" + "\"" + classCd + "\"" + ";");
+	if(grs.next()) {
+	    classCd = grs.getString("GENERAL_NAME");  //対応する名称があれば取得する。無ければコードのまま。
+	}
+	
+	//タイプコードから名称を求める
+	String type = rs.getString("TYPE");		    // 分類
+	grs = dga.getResultSet("select * from generals where DIVISION='TYP'and GENERAL_CODE=" + "\"" + type + "\"" + ";");
+	if(grs.next()) {
+	    type = grs.getString("GENERAL_NAME");  //対応する名称があれば取得する。無ければコードのまま。
+	}
+	
         String size = rs.getString("SIZE");		    // サイズ
         String price = rs.getString("PRICE");		    // 商品単価
         String stock = rs.getString("STOCK");		    // 在庫数
@@ -217,7 +270,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	    + "<td>"+ classCd + "</td>"
 	    + "<td>"+ type + "</td>"
 	    + "<td>"+ size + "</td>"
-	    + "<td>"+ price + "</td>"
+	    + "<td>"+ "￥" + String.format("%,d", Integer.parseInt(price)) + "</td>"
 	    + "<td>"+ stock + "</td>"
 	    + "<td>"+ materialFront + "</td>"
 	    + "<td>"+ materialInside + "</td>"
@@ -230,20 +283,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 
     // データベースへのコネクションを閉じる
     da.close();
-    
-    // ダイアログメッセージ作成
-    if(queryProductCode.equals("") &&
-	queryProductName.equals("") && 
-	queryBrand.equals("") && 
-	queryColor.equals("") && 
-	queryClass.equals("") && 
-	queryType.equals("") && 
-	queryJanCode.equals("")) {
-       
-//kari
-//	tableHTML = "";		//テーブルを非表示にする
-//	daialogMsg = "window.alert(\"検索条件を入力してください。\")";
-    } 
+    dga.close();
 
 %>
 
@@ -271,17 +311,19 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	    int offsetNum = 0;	    //DB表示時のオフセット値
 	    int numOfSearch = 0;    //DB検索結果件数
 	    String queryPageId = "";	//戻り先URL
-	    String queryOrderNo = "";   //オーダーNo
+	    String queryOrderCode = "";   //オーダーNo
 	%>
 
 	<input type="hidden" id="tmp_value1" value="<%= queryPageId %>">	
-	<input type="hidden" id="tmp_value2" value="<%= queryOrderNo %>">	
+	<input type="hidden" id="tmp_value2" value="<%= queryOrderCode %>">	
 	
 	<h3 class="text-center mt-sm-4">商品検索</h3>
 	<div class="container"><!-- container：箱 -->
 	    <form action="productSearchPage.jsp" method="post">
+		<!-- del
 		<INPUT TYPE='hidden' NAME='abc' VALUE='1234'>
 		<INPUT TYPE='hidden' NAME='def' VALUE='5678'>
+		-->
 
 		<div class="row form-group" ><!-- row：1行目 -->
 		    <div class="col-auto">
@@ -330,7 +372,8 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 			    <button class="btn btn-link" type="submit" name="submitBtn"  value="back">＜前</button>
 			    <label for="inputType" class="col-form-label col-auto"><%= offsetNum / DISP_NUM + 1 %></label>
 			    <button class="btn btn-link" type="submit" name="submitBtn" value="forward">次＞</button>
-			    <button class="ml-sm-3 btn btn-secondary" type="submit">検索</button>
+			    <!-- <button class="ml-sm-3 btn btn-secondary" type="submit">検索</button> -->
+			    <button class="ml-sm-3 btn btn-secondary" type="submit" name="submitBtn" value="do">検索</button>
 			</div>
 		    </div>
 		</div>
@@ -347,13 +390,12 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 			
 			<!-- 選択ボタン -->
 			<!-- <button class="ml-sm-3 btn btn-secondary" type="submit" name="submitBtn" value="selection">選択</button> -->
-			<!-- <input class="ml-sm-3 btn btn-secondary" type="button" onclick="location.href='<%= queryPageId %>'" value="選択"> -->
+			<!-- <input class="ml-sm-3 btn btn-secondary" type="button" id="selectButton" value="選択"> -->
 			<input class="ml-sm-3 btn btn-secondary" type="button" id="selectButton" value="選択">
 		    
 		    </div>
 		</div>
 		    
-		<!-- 検索条件なしの時のエラーダイアログ表示
 		<script>
 		    <%= daialogMsg %>
 		</script>

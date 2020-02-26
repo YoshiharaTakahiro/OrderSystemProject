@@ -4,8 +4,6 @@
     Author     : masahiro.fujihara
  */
 
-/* global queryPageIdForJs */
-
 $(function () {
 
     // 選択ボタン処理
