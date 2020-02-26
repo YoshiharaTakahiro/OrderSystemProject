@@ -33,7 +33,7 @@
         colorPulldown += "<option value=\"\" selected>選択</option>";                    
         while(colorCdRs.next()){
             colorPulldown += "<option value=\"" + colorCdRs.getString("COLOR_CODE") + "\" ";
-            if(colorCode.equals(colorCdRs.getString("COLOR_CODE"))){
+            if(colorCode.equals(colorCdRs.getString("COLOR_CODE")) || colorCode.equals(colorCdRs.getString("COLOR"))){
                 colorPulldown += "selected "; // 一致するものがあれば選択状態にする
             }
             colorPulldown += ">" + colorCdRs.getString("COLOR") + "</option>";                                        
@@ -256,7 +256,7 @@
     if(productSearchCode != null){
         // 商品検索画面から戻ってきたとき
         String productSearchName  = (String) request.getParameter("productName");
-        String productSearchColor = (String) request.getParameter("colorCode");
+        String productSearchColor = (String) request.getParameter("color");
         int productSearchStock = Integer.parseInt(request.getParameter("stock"));
         int productSearchPrice = Integer.parseInt(request.getParameter("price"));
         
