@@ -246,7 +246,6 @@ $(function () {
         
     }
     
-
     // 登録ボタン処理
     $("#insertButton").click( function() {
         
@@ -274,9 +273,8 @@ $(function () {
     });
     
     
-    // 商品検索ボタン
-    $("#searchProductBt").click( function() {
-        
+    // 検索ページ遷移をする前にクライアントでしか管理していない情報を退避させる。
+    var pageTransition = function(nextPage){
         // 取引先コードをクッキーに保存
         if($("#supplierCode").val() != ""){
             document.cookie = 'newSupplier=' + encodeURIComponent($("#supplierCode").val());
@@ -294,7 +292,7 @@ $(function () {
         var form = document.createElement('form');
         
         form.method = 'POST';
-        form.action = '../view/productSearchPage.jsp';
+        form.action = '../view/'+nextPage;
 
         // 商品検索画面に画面IDを送信
         var request = document.createElement('input');
@@ -314,8 +312,17 @@ $(function () {
         document.body.appendChild(form);
 
         form.submit();
-        
-    });
+    };
     
+    // 商品検索ボタン
+    $("#searchProductBt").click( function() {        
+        pageTransition('productSearchPage.jsp');        
+    });
+
+    // 取引先検索ボタン
+    $("#searchSupplierButton").click( function() {
+        pageTransition('supplierSearchPage.jsp');        
+    });
+
 });
 
