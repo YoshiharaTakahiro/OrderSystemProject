@@ -250,6 +250,17 @@
     cookie.setMaxAge(0);
     response.addCookie(cookie);
     
+    // 取引先検索画面から戻ってきたとき
+    String supplierSearchCode = (String) request.getParameter("supplierCode");
+    if(supplierSearchCode != null){
+
+        String supplierSearchName = (String) request.getParameter("supplierName");
+        
+        // 取引先コードと取引先名を設定する。
+        supplierCode = supplierSearchCode;
+        supplierName = supplierSearchName;
+
+    }
     
     // 商品検索画面から戻ってきたとき
     String productSearchCode = (String) request.getParameter("productCode");
@@ -264,7 +275,7 @@
         detailHTML += detailHtmlCreate(productSearchCode,productSearchName,productSearchColor,productSearchStock,productSearchPrice,0,0);
         
     }
-
+    
     // DBクローズ
     da.close();
 
@@ -311,7 +322,7 @@
                     <input type="text" class="form-control" id="supplierCode" placeholder="取引先コードを入力" value="<%= supplierCode %>"> 
                 </div>
                 <div class="col-md-1 d-flex align-items-end">
-                    <input type="button" class="btn btn-secondary" id="supplierbutton" value="検索"> 
+                    <input type="button" class="btn btn-secondary" id="searchSupplierButton" value="検索"> 
                 </div>
                 <div class="col-md-4">
                     <label for="supplierName" class="col-form-label">取引先名</label>                   
