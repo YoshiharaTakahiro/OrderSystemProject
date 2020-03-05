@@ -177,9 +177,12 @@ $(function () {
                 }
                 pulldownObj += "</select>"
                 
+                // 仮明細番号
+                var wkDetailCode = "<input type=\"hidden\" value=\"0\">"
+                
                 // 列の内容
                 productDelCol.innerHTML   = checkBoxObj;
-                productCodeCol.innerHTML  = addProductCode;
+                productCodeCol.innerHTML  = addProductCode + wkDetailCode;
                 productNameCol.innerHTML  = productInfo.productName;
                 colorCol.innerHTML        = pulldownObj;
                 stockCol.innerHTML        = 0;
@@ -220,6 +223,7 @@ $(function () {
             
             var delFlg = table.rows[i].cells[0].children[0].checked;      // 削除フラグ
             var productCode = table.rows[i].cells[1].innerText;           // 商品コード
+            var detailCode = Number(table.rows[i].cells[1].children[0].value);   // 明細番号
             var productName = table.rows[i].cells[2].innerText;           // 商品名
             var colorCode = table.rows[i].cells[3].children[0].value;     // カラーコード
             var stock = Number(table.rows[i].cells[4].innerText);                 // 在庫数
@@ -229,6 +233,7 @@ $(function () {
             
             var productJson = {
                 delFlg : delFlg,
+                detailCode : detailCode,
                 productCode : productCode,
                 productName : productName,
                 colorCode : colorCode,
@@ -245,31 +250,106 @@ $(function () {
         return parameterJson;
         
     }
-    
-    // 登録ボタン処理
-    $("#insertButton").click( function() {
+
+    // 登録・更新処理呼出メソッド
+    var orderRegister = function(process){
+        // 入力チェック
+        if($('#supplierCode').val() == '' ){
+            alert("取引先コードを入力してください");
+            return;
+        }       
+        
+        if($('#deliveryDate').val() == '' ){
+            alert("配送日を入力してください");
+            return;
+        }       
         
         var productJson = productJsonCreate();
         if(productJson.length == 0 ){
+            alert("商品を入力してください");
             return;
         }
-                
+        
+        var processText = "";
+        if(process == 'insert'){
+            processText = '登録'
+        }else if(process == 'update'){
+            processText = '更新'            
+        }else if(process == 'delete'){
+            processText = '削除'            
+        }            
+        // 確認ダイアログ
+        var result = window.confirm('受注の'+processText+'を行いますがよろしいですか？');
+        if(!result){
+            return;
+        }
+
         // 受注登録処理呼出
         var form = document.createElement('form');
-        var request = document.createElement('input');
+        var reqProcess = document.createElement('input');       // 処理内容
+        var reqOrderCode = document.createElement('input');     // 受注番号
+        var reqSupplier = document.createElement('input');      // 取引先コード
+        var reqDeliveryDate = document.createElement('input');  // 納品日
+        var reqDepartment = document.createElement('input');    // 部署
+        var reqOrderUser = document.createElement('input');     // ユーザ
+        var reqProducts = document.createElement('input');      // 商品一覧
 
         form.method = 'POST';
         form.action = '../service/orderRegister.jsp';
+        
+        reqProcess.type = 'hidden'; // 削除処理のパラメータを付与
+        reqProcess.name = 'processRequest';
+        reqProcess.value = encodeURIComponent(process);
+        form.appendChild(reqProcess);
 
-        request.type = 'hidden'; //入力フォームが表示されないように
-        request.name = 'parameterJson';
-        request.value = JSON.stringify(productJson);
+        reqOrderCode.type = 'hidden';
+        reqOrderCode.name = 'orderCode';
+        reqOrderCode.value = encodeURIComponent($('#orderCode').val());
+        form.appendChild(reqOrderCode);
 
-        form.appendChild(request);
+        reqSupplier.type = 'hidden';
+        reqSupplier.name = 'supplierCode';
+        reqSupplier.value = encodeURIComponent($('#supplierCode').val());
+        form.appendChild(reqSupplier);
+
+        reqDeliveryDate.type = 'hidden';
+        reqDeliveryDate.name = 'deliveryDate';
+        reqDeliveryDate.value = encodeURIComponent($('#deliveryDate').val());
+        form.appendChild(reqDeliveryDate);
+
+        reqDepartment.type = 'hidden';
+        reqDepartment.name = 'departmentCode';
+        reqDepartment.value = encodeURIComponent($('#departmentCode').val());
+        form.appendChild(reqDepartment);
+
+        reqOrderUser.type = 'hidden';
+        reqOrderUser.name = 'orderUserCode';
+        reqOrderUser.value = encodeURIComponent($('#orderUserCode').val());
+        form.appendChild(reqOrderUser);
+
+        reqProducts.type = 'hidden';
+        reqProducts.name = 'parameterJson';
+        reqProducts.value = encodeURIComponent(JSON.stringify(productJson));
+        form.appendChild(reqProducts);
+
         document.body.appendChild(form);
 
         form.submit();
-        
+    }
+
+    // 登録ボタン処理
+    $("#insertButton").click( function() {
+        orderRegister('insert');
+    });
+    
+    // 更新ボタン処理
+    $("#updateButton").click( function() {
+        orderRegister('update');
+    });
+    
+    // 削除ボタン処理
+    $("#deleteButton").click( function() {
+        orderRegister('delete');
     });
     
     

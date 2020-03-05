@@ -11,7 +11,7 @@
 <%@include file="../service/tabHeder.jsp" %>
 <%!
     // 関数
-    String detailHtmlCreate(String productCode, String productName, String colorCode, int stock, int orderPrice, int orderCount, int subtotal) throws Exception{
+    String detailHtmlCreate(String productCode, String detailCode, String productName, String colorCode, int stock, int orderPrice, int orderCount, int subtotal) throws Exception{
         // ナンバーフォーマット
         NumberFormat nfCur = NumberFormat.getCurrencyInstance();  
         
@@ -44,7 +44,7 @@
         // テーブル用HTMLを作成する
         String detailHTML = "<tr>" 
             + "<td><input type=\"checkbox\" class=\"form-control form-control-sm\" id=\"proDel\"></td>"
-            + "<td>" + productCode + "</td>"
+            + "<td>" + productCode + "<input type=\"hidden\" value=\""+ detailCode + "\"></td>"
             + "<td>"+ productName + "</td>"
             + "<td>"+ colorPulldown + "</td>"
             + "<td>"+ stock + "</td>"
@@ -68,7 +68,9 @@
     NumberFormat nfCur = NumberFormat.getCurrencyInstance();  
     
     // ヘッダ項目
+    String departmentCode = "";
     String departmentName = "";
+    String orderUserCode = "";
     String orderUserName = "";
     String supplierCode = "";
     String supplierName = "";
@@ -96,10 +98,12 @@
         // 新規登録
         orderCode = "";
         // 受注番号：空白、部署・受注者はログインユーザの情報を表示
+        orderUserCode = userid;
         orderUserName = username;
+        departmentCode =  (String) session.getAttribute("DepartmentCode");
         
         // 部署名取得
-        String deptSql = "select DEPARTMENT_NAME from DEPARTMENTS where DELETE_FLAG = 0 and DEPARTMENT_CODE = '" + (String) session.getAttribute("DepartmentCode") + "'";
+        String deptSql = "select DEPARTMENT_NAME from DEPARTMENTS where DELETE_FLAG = 0 and DEPARTMENT_CODE = '" + departmentCode + "'";
         ResultSet rs = da.getResultSet(deptSql);
         while(rs.next()){
             departmentName = rs.getString("DEPARTMENT_NAME");
@@ -121,7 +125,7 @@
     }else{
         // 変更 OR 削除
         // 受注番号に紐づくユーザ情報、受注情報の取得
-        String orderSql = "select o.ORDER_CODE, o.ORDER_DATE, DATE_FORMAT(o.DELIVERY_DATE, '%Y/%m/%d') DELIVERY_DATE, o.SUPPLIER_CODE, s.SUPPLIER_NAME, d.DEPARTMENT_NAME, u.USER_NAME "
+        String orderSql = "select o.ORDER_CODE, o.ORDER_DATE, DATE_FORMAT(o.DELIVERY_DATE, '%Y/%m/%d') DELIVERY_DATE, o.SUPPLIER_CODE, s.SUPPLIER_NAME, o.DEPARTMENT_CODE, d.DEPARTMENT_NAME, o.USER_CODE, u.USER_NAME "
                         + "from ORDERS o, SUPPLIERS s, USERS u, DEPARTMENTS d "
                         + "where o.SUPPLIER_CODE = s.SUPPLIER_CODE "
                         + "and o.DEPARTMENT_CODE = d.DEPARTMENT_CODE "
@@ -132,11 +136,13 @@
         ResultSet rs = da.getResultSet(orderSql);
         
         if(rs.next()){
-            deliveryDate = rs.getString("DELIVERY_DATE");
-            supplierCode = rs.getString("SUPPLIER_CODE");
-            supplierName = rs.getString("SUPPLIER_NAME");
+            deliveryDate   = rs.getString("DELIVERY_DATE");
+            supplierCode   = rs.getString("SUPPLIER_CODE");
+            supplierName   = rs.getString("SUPPLIER_NAME");
+            departmentCode = rs.getString("DEPARTMENT_CODE");
             departmentName = rs.getString("DEPARTMENT_NAME");
-            orderUserName = rs.getString("USER_NAME");
+            orderUserCode  = rs.getString("USER_CODE");
+            orderUserName  = rs.getString("USER_NAME");
 
             // 税率マスタから受注日の税率を取得
             String taxSql = "select TAX from TAXS where TAX_START <= '" + deliveryDate + "' order by TAX_START";
@@ -178,7 +184,7 @@
             total += subtotal + subtotal * tax;
             
             // テーブル用HTMLを作成する
-            detailHTML += detailHtmlCreate(productCode,productName,colorCode,stock,orderPrice,orderCount,subtotal);
+            detailHTML += detailHtmlCreate(productCode,detailCode,productName,colorCode,stock,orderPrice,orderCount,subtotal);
 
         }
         
@@ -214,6 +220,7 @@
 
                 // テーブル用HTMLを作成する
                 detailHTML += detailHtmlCreate(jsonObj.getString("productCode",""),
+                                               jsonObj.getString("detailCode","0"),
                                                jsonObj.getString("productName",""),
                                                jsonObj.getString("colorCode",""),
                                                jsonObj.getInt("stock",0),
@@ -266,13 +273,14 @@
     String productSearchCode = (String) request.getParameter("productCode");
     if(productSearchCode != null){
         // 商品検索画面から戻ってきたとき
+        String wkDetailCode = "0";
         String productSearchName  = (String) request.getParameter("productName");
         String productSearchColor = (String) request.getParameter("color");
         int productSearchStock = Integer.parseInt(request.getParameter("stock"));
         int productSearchPrice = Integer.parseInt(request.getParameter("price"));
         
         // テーブル用HTMLを作成する
-        detailHTML += detailHtmlCreate(productSearchCode,productSearchName,productSearchColor,productSearchStock,productSearchPrice,0,0);
+        detailHTML += detailHtmlCreate(productSearchCode, wkDetailCode, productSearchName,productSearchColor,productSearchStock,productSearchPrice,0,0);
         
     }
     
@@ -306,13 +314,15 @@
                 </div>            
 
     		<div class="col-md-4">
-                    <label for="departmentCode" class="col-form-label">部署</label>
-                    <input type="text" class="form-control" id="departmentCode" value="<%= departmentName %>" readonly>
+                    <label for="departmentName" class="col-form-label">部署</label>
+                    <input type="text" class="form-control" id="departmentName" value="<%= departmentName %>" readonly>
+                    <input type="hidden" class="form-control" id="departmentCode" value="<%= departmentCode %>">
                 </div>            
 
 		<div class="col-md-4">
-                    <label for="orderUserCode" class="col-form-label">受注者</label>
-                    <input type="text" class="form-control" id="orderUserCode" value="<%= orderUserName %>" readonly>
+                    <label for="orderUserName" class="col-form-label">受注者</label>
+                    <input type="text" class="form-control" id="orderUserName" value="<%= orderUserName %>" readonly>
+                    <input type="hidden" class="form-control" id="orderUserCode" value="<%= orderUserCode %>">
                 </div>            
             </div>
 
