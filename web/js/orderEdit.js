@@ -7,6 +7,53 @@ $(function () {
     
     // フォーマット
     var numFor = new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' });
+
+    // 個数変更処理
+    var updateSubtotal = function(obj, productCount){
+        
+        // 在庫・単価の取得
+        var stock = obj.parentNode.parentNode.children[4].innerText;
+        var price = obj.parentNode.parentNode.children[5].innerText;
+        price = Number(price.replace(/,/g, '').substring(1));
+        
+        // 小計更新
+        obj.parentNode.parentNode.children[7].innerText = numFor.format(price * productCount);
+        
+        // 税・合計更新
+        var table = document.getElementById('orderDetailTable');
+        var rows = table.rows.length;
+
+        // 合計額計算
+        var newSum = 0;
+        for(var i=1; i<rows-3; i++){
+            
+            var deleteFlg = table.rows[i].cells[0].children[0].checked;
+            var wksum = table.rows[i].cells[7].innerText;
+            wksum = Number(wksum.replace(/,/g, '').substring(1));
+            
+            // 削除フラグがOFFのみ計算
+            if(!deleteFlg){
+                newSum += wksum;
+            }
+        }
+        
+        var tax = document.getElementById('tax');
+        var total = document.getElementById('total');
+        var taxHidden = document.getElementById('taxHidden');
+        
+        tax.innerText = numFor.format(newSum * taxHidden.value);
+        total.innerText = numFor.format(newSum + newSum * taxHidden.value);
+        
+    }
+    
+    // 削除フラグ変更処理
+    $(".deleteCheck").change(function(){
+        // 数量オブジェクト取得
+        var productCountObj = this.parentNode.parentNode.children[6].children[0];
+        var productCount = productCountObj.value;
+
+        updateSubtotal(productCountObj, productCount);
+    });
         
     // カラープルダウン変更処理
     var changeStock = function(){
@@ -55,39 +102,6 @@ $(function () {
     };
     $(".colorPull").change(changeStock);
     
-    // 個数変更処理
-    var updateSubtotal = function(obj, productCount){
-        
-        // 在庫・単価の取得
-        var stock = obj.parentNode.parentNode.children[4].innerText;
-        var price = obj.parentNode.parentNode.children[5].innerText;
-        price = Number(price.replace(/,/g, '').substring(1));
-        
-        // 小計更新
-        obj.parentNode.parentNode.children[7].innerText = numFor.format(price * productCount);
-        
-        // 税・合計更新
-        var table = document.getElementById('orderDetailTable');
-        var rows = table.rows.length;
-
-        // 合計額計算
-        var newSum = 0;
-        for(var i=1; i<rows-3; i++){
-            var wksum = table.rows[i].cells[7].innerText;
-            wksum = Number(wksum.replace(/,/g, '').substring(1));
-            
-            newSum += wksum;
-        }
-        
-        var tax = document.getElementById('tax');
-        var total = document.getElementById('total');
-        var taxHidden = document.getElementById('taxHidden');
-        
-        tax.innerText = numFor.format(newSum * taxHidden.value);
-        total.innerText = numFor.format(newSum + newSum * taxHidden.value);
-        
-    }
-    
     // 個数変更イベント
     var changeProductCount = function(){        
         // 変更した個数を取得
@@ -112,7 +126,7 @@ $(function () {
             // 通信完了(4)かつ正常終了(200)の場合
             if(xhr.readyState === 4 && xhr.status === 200) {
                 
-                var resText = xhr.responseText;                
+                var resText = xhr.responseText;
                 var supplierInfo = JSON.parse(resText);
                 
                 var supplierSt = document.getElementById('supplierName');
@@ -148,8 +162,7 @@ $(function () {
                 // 商品名、カラー、在庫、単価はデータベースから取得
                 var resText = xhr.responseText;                
                 var productInfo = JSON.parse(resText);
-                
-                
+                                
                 // 明細情報取得
                 var table = document.getElementById('orderDetailTable');
                 var rows = table.rows.length; // 行数
@@ -218,21 +231,23 @@ $(function () {
         // パラメータ作成
         var parameterJson = [];
         
+        // JSON配列用インデックス
+        var inx = 0;
         // rows-3:新規行、税率行、合計行を除いた行
         for(var i=1; i<rows-3; i++){
             
-            var delFlg = table.rows[i].cells[0].children[0].checked;      // 削除フラグ
-            var productCode = table.rows[i].cells[1].innerText;           // 商品コード
+            var deleteFlg = table.rows[i].cells[0].children[0].checked;          // 削除フラグ            
+            var productCode = table.rows[i].cells[1].innerText;                  // 商品コード
             var detailCode = Number(table.rows[i].cells[1].children[0].value);   // 明細番号
-            var productName = table.rows[i].cells[2].innerText;           // 商品名
-            var colorCode = table.rows[i].cells[3].children[0].value;     // カラーコード
-            var stock = Number(table.rows[i].cells[4].innerText);                 // 在庫数
-            var price = Number(table.rows[i].cells[5].innerText.replace(/,/g, '').substring(1));;   // 価格
-            var productCount = Number(table.rows[i].cells[6].children[0].value);  // 個数
-            var subtotal = Number(table.rows[i].cells[7].innerText.replace(/,/g, '').substring(1));;   // 小計
-            
+            var productName = table.rows[i].cells[2].innerText;                  // 商品名
+            var colorCode = table.rows[i].cells[3].children[0].value;            // カラーコード
+            var stock = Number(table.rows[i].cells[4].innerText);                // 在庫数
+            var price = Number(table.rows[i].cells[5].innerText.replace(/,/g, '').substring(1));    // 価格
+            var productCount = Number(table.rows[i].cells[6].children[0].value); // 個数
+            var subtotal = Number(table.rows[i].cells[7].innerText.replace(/,/g, '').substring(1)); // 小計
+                        
             var productJson = {
-                delFlg : delFlg,
+                deleteFlg : deleteFlg,
                 detailCode : detailCode,
                 productCode : productCode,
                 productName : productName,
@@ -243,7 +258,8 @@ $(function () {
                 subtotal : subtotal
             };
             
-            parameterJson[i-1] = productJson;
+            parameterJson[inx] = productJson;
+            inx++;
 
         }
         
@@ -361,6 +377,11 @@ $(function () {
             document.cookie = 'newSupplierName=' + encodeURIComponent($("#supplierName").val());            
         }
         
+        // 納品日をクッキーに保存
+        if($("#deliveryDate").val() != ""){
+            document.cookie = 'newDeliveryDate=' + encodeURIComponent($("#deliveryDate").val());
+        }
+                
         // 新規追加行の情報をクッキーに保存
         var productJson = productJsonCreate();
         if(productJson.length != 0 ){
