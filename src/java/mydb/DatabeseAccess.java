@@ -40,8 +40,8 @@ public class DatabeseAccess {
      */
     public DatabeseAccess() {
         // Mysql8以前
-        // driver = "com.mysql.jdbc.Driver";
-        // url = "jdbc:mysql://localhost:3306/omdb";
+        //driver = "com.mysql.jdbc.Driver";
+        //url = "jdbc:mysql://localhost:3306/omdb";
 
         // Mysql8
         driver = "com.mysql.cj.jdbc.Driver";
@@ -56,6 +56,7 @@ public class DatabeseAccess {
     public synchronized void open() throws Exception {
         Class.forName(driver);
         connection = DriverManager.getConnection(url, user, password);
+        connection.setAutoCommit(false);
         statement = connection.createStatement();
     }
  
@@ -76,6 +77,22 @@ public class DatabeseAccess {
      */
     public void execute(String sql) throws Exception {
         statement.execute(sql);
+    }
+    
+    /**
+     * トランザクションの確定
+     * @throws Exception 
+     */
+    public void commit() throws Exception{
+        connection.commit();
+    }
+    
+    /**
+     * トランザクションの取消
+     * @throws Exception 
+     */
+    public void rollback() throws Exception{
+        connection.rollback();        
     }
  
     /**
