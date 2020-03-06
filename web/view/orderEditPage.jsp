@@ -11,7 +11,7 @@
 <%@include file="../service/tabHeder.jsp" %>
 <%!
     // 関数
-    String detailHtmlCreate(String productCode, String productName, String colorCode, int stock, int orderPrice, int orderCount, int subtotal) throws Exception{
+    String detailHtmlCreate(Boolean detailDeleteFlg, String productCode, String detailCode, String productName, String colorCode, int stock, int orderPrice, int orderCount, int subtotal) throws Exception{
         // ナンバーフォーマット
         NumberFormat nfCur = NumberFormat.getCurrencyInstance();  
         
@@ -40,11 +40,17 @@
         }
         colorPulldown += "</select>";
 
+        // 削除フラグチェックボックス
+        String delCheckBox = "<input type=\"checkbox\" class=\"form-control form-control-sm deleteCheck\" id=\"proDel\" ";
+        if(detailDeleteFlg){
+            delCheckBox += "checked=\"checked\" ";
+        }
+        delCheckBox += ">";
 
         // テーブル用HTMLを作成する
         String detailHTML = "<tr>" 
-            + "<td><input type=\"checkbox\" class=\"form-control form-control-sm\" id=\"proDel\"></td>"
-            + "<td>" + productCode + "</td>"
+            + "<td>" + delCheckBox + "</td>"
+            + "<td>" + productCode + "<input type=\"hidden\" value=\""+ detailCode + "\"></td>"
             + "<td>"+ productName + "</td>"
             + "<td>"+ colorPulldown + "</td>"
             + "<td>"+ stock + "</td>"
@@ -68,7 +74,9 @@
     NumberFormat nfCur = NumberFormat.getCurrencyInstance();  
     
     // ヘッダ項目
+    String departmentCode = "";
     String departmentName = "";
+    String orderUserCode = "";
     String orderUserName = "";
     String supplierCode = "";
     String supplierName = "";
@@ -96,10 +104,12 @@
         // 新規登録
         orderCode = "";
         // 受注番号：空白、部署・受注者はログインユーザの情報を表示
+        orderUserCode = userid;
         orderUserName = username;
+        departmentCode =  (String) session.getAttribute("DepartmentCode");
         
         // 部署名取得
-        String deptSql = "select DEPARTMENT_NAME from DEPARTMENTS where DELETE_FLAG = 0 and DEPARTMENT_CODE = '" + (String) session.getAttribute("DepartmentCode") + "'";
+        String deptSql = "select DEPARTMENT_NAME from DEPARTMENTS where DELETE_FLAG = 0 and DEPARTMENT_CODE = '" + departmentCode + "'";
         ResultSet rs = da.getResultSet(deptSql);
         while(rs.next()){
             departmentName = rs.getString("DEPARTMENT_NAME");
@@ -121,22 +131,27 @@
     }else{
         // 変更 OR 削除
         // 受注番号に紐づくユーザ情報、受注情報の取得
-        String orderSql = "select o.ORDER_CODE, o.ORDER_DATE, DATE_FORMAT(o.DELIVERY_DATE, '%Y/%m/%d') DELIVERY_DATE, o.SUPPLIER_CODE, s.SUPPLIER_NAME, d.DEPARTMENT_NAME, u.USER_NAME "
-                        + "from ORDERS o, SUPPLIERS s, USERS u, DEPARTMENTS d "
-                        + "where o.SUPPLIER_CODE = s.SUPPLIER_CODE "
-                        + "and o.DEPARTMENT_CODE = d.DEPARTMENT_CODE "
-                        + "and o.USER_CODE = u.USER_CODE "
-                        + "and o.DELETE_FLAG = false "
-                        + "and o.ORDER_CODE = '" + orderCode + "' ";
+        String orderSql  = "select o.ORDER_CODE, o.ORDER_DATE, DATE_FORMAT(o.DELIVERY_DATE, '%Y/%m/%d') DELIVERY_DATE, o.SUPPLIER_CODE, s.SUPPLIER_NAME, o.DEPARTMENT_CODE, d.DEPARTMENT_NAME, o.USER_CODE, u.USER_NAME ";
+               orderSql += "from ORDERS o, SUPPLIERS s, USERS u, DEPARTMENTS d ";
+               orderSql += "where o.SUPPLIER_CODE = s.SUPPLIER_CODE ";
+               orderSql += "and o.DEPARTMENT_CODE = d.DEPARTMENT_CODE ";
+               orderSql += "and o.USER_CODE = u.USER_CODE ";
+               // システム管理者は論理削除された明細も参照可能               
+               if(!sysFlg){
+                   orderSql += "and o.DELETE_FLAG = false ";
+                }
+                orderSql +=  "and o.ORDER_CODE = '" + orderCode + "' ";
         
         ResultSet rs = da.getResultSet(orderSql);
         
         if(rs.next()){
-            deliveryDate = rs.getString("DELIVERY_DATE");
-            supplierCode = rs.getString("SUPPLIER_CODE");
-            supplierName = rs.getString("SUPPLIER_NAME");
+            deliveryDate   = rs.getString("DELIVERY_DATE");
+            supplierCode   = rs.getString("SUPPLIER_CODE");
+            supplierName   = rs.getString("SUPPLIER_NAME");
+            departmentCode = rs.getString("DEPARTMENT_CODE");
             departmentName = rs.getString("DEPARTMENT_NAME");
-            orderUserName = rs.getString("USER_NAME");
+            orderUserCode  = rs.getString("USER_CODE");
+            orderUserName  = rs.getString("USER_NAME");
 
             // 税率マスタから受注日の税率を取得
             String taxSql = "select TAX from TAXS where TAX_START <= '" + deliveryDate + "' order by TAX_START";
@@ -149,21 +164,24 @@
             // エラー処理させる
         }
 
-        String detailSql = "select o.ORDER_CODE, d.DETAIL_CODE, d.PRODUCT_CODE, p.PRODUCT_NAME, d.COLOR_CODE, p.STOCK, p.ALLOCATION, d.ORDER_COUNT, d.ORDER_PRICE "
-                         + "from ORDERS o, DETAILS d, PRODUCTS p "
-                         + "where o.ORDER_CODE = d.ORDER_CODE "
-                         + "and d.PRODUCT_CODE = p.PRODUCT_CODE "
-                         + "and d.COLOR_CODE = p.COLOR_CODE "
-                         + "and d.DELETE_FLAG = false "
-                         + "and o.ORDER_CODE = '" + orderCode + "' "
-                         + "order by o.ORDER_CODE, d.DETAIL_CODE ";
-
+        String detailSql  = "select d.DELETE_FLAG, o.ORDER_CODE, d.DETAIL_CODE, d.PRODUCT_CODE, p.PRODUCT_NAME, d.COLOR_CODE, p.STOCK, p.ALLOCATION, d.ORDER_COUNT, d.ORDER_PRICE ";
+               detailSql += "from ORDERS o, DETAILS d, PRODUCTS p ";
+               detailSql += "where o.ORDER_CODE = d.ORDER_CODE ";
+               detailSql += "and d.PRODUCT_CODE = p.PRODUCT_CODE ";
+               detailSql += "and d.COLOR_CODE = p.COLOR_CODE ";
+               // システム管理者は論理削除された明細も参照可能               
+               if(!sysFlg){
+                   detailSql += "and d.DELETE_FLAG = false ";
+               }
+               detailSql += "and o.ORDER_CODE = '" + orderCode + "' ";
+               detailSql += "order by o.ORDER_CODE, d.DETAIL_CODE ";
+        
         rs = da.getResultSet(detailSql);
         
         while(rs.next()){
 
             // 明細項目
-            String detailDeleteFlg = "";
+            Boolean detailDeleteFlg = rs.getBoolean("DELETE_FLAG");
             String detailCode = rs.getString("DETAIL_CODE");
             String productCode = rs.getString("PRODUCT_CODE");
             String productName = rs.getString("PRODUCT_NAME");
@@ -173,27 +191,24 @@
             int orderCount = rs.getInt("ORDER_COUNT");
             int subtotal = orderPrice * orderCount;
             
-            // 合計金額計算
-            taxSum += subtotal * tax;
-            total += subtotal + subtotal * tax;
+            // 合計金額計算(削除フラグONの金額は計算しない)
+            if(!detailDeleteFlg){
+                taxSum += subtotal * tax;
+                total += subtotal + subtotal * tax;
+            }
             
             // テーブル用HTMLを作成する
-            detailHTML += detailHtmlCreate(productCode,productName,colorCode,stock,orderPrice,orderCount,subtotal);
+            detailHTML += detailHtmlCreate(detailDeleteFlg, productCode,detailCode,productName,colorCode,stock,orderPrice,orderCount,subtotal);
 
         }
         
-        // 合計値フォーマット
-        taxSt = nfCur.format(taxSum);
-        totalSt = nfCur.format(total);
-
         // 変更・削除ボタン表示
         buttonHTML += "<div class=\"col-auto\"> "
                     + "<input type=\"button\" class=\"btn btn-secondary\" id=\"updateButton\" value=\"変更\"> "
                     + "</div> "
                     + "<div class=\"col-auto\"> "
                     + "<input type=\"button\" class=\"btn btn-secondary\" id=\"deleteButton\" value=\"削除\"> "
-                    + "</div>";        
-
+                    + "</div>";
     }
     
     // クッキーからの情報を表示（新規追加したが検索などの画面遷移をしたとき用）
@@ -203,6 +218,12 @@
 
         // 商品新規行
         if(cookie.getName().equals("newProRow")){
+            
+            // クッキーに情報がある場合は最優先させるため初期化
+            detailHTML = "";
+            taxSum = 0;
+            total = 0;
+            
             // エンコードされて渡されるのでデコード処理
             String decodedResult = URLDecoder.decode(cookie.getValue(), "UTF-8");
             
@@ -211,15 +232,26 @@
             JsonArray jsonArray = reader.readArray();            
             for(int i=0; i<jsonArray.size(); i++){
                 JsonObject jsonObj = jsonArray.getJsonObject(i);
+                
+                Boolean detailDeleteFlg = jsonObj.getBoolean("deleteFlg", false);
+                int subtotal = jsonObj.getInt("subtotal",0);
+
+                // 合計金額計算(削除フラグONの金額は計算しない)
+                if(!detailDeleteFlg){
+                    taxSum += subtotal * tax;
+                    total += subtotal + subtotal * tax;
+                }
 
                 // テーブル用HTMLを作成する
-                detailHTML += detailHtmlCreate(jsonObj.getString("productCode",""),
+                detailHTML += detailHtmlCreate(detailDeleteFlg,
+                                               jsonObj.getString("productCode",""),
+                                               jsonObj.getString("detailCode","0"),
                                                jsonObj.getString("productName",""),
                                                jsonObj.getString("colorCode",""),
                                                jsonObj.getInt("stock",0),
                                                jsonObj.getInt("price",0),
                                                jsonObj.getInt("productCount",0),
-                                               jsonObj.getInt("subtotal",0));
+                                               subtotal);
             }
         }
 
@@ -234,7 +266,14 @@
             // エンコードされて渡されるのでデコード処理
             String decodedResult = URLDecoder.decode(cookie.getValue(), "UTF-8");
             supplierName = decodedResult;
-        }        
+        }
+
+        // 納品日
+        if(cookie.getName().equals("newDeliveryDate")){
+            // エンコードされて渡されるのでデコード処理
+            String decodedResult = URLDecoder.decode(cookie.getValue(), "UTF-8");
+            deliveryDate = decodedResult;
+        }
     }
 
     // 処理終わればクッキー削除
@@ -250,6 +289,10 @@
     cookie.setMaxAge(0);
     response.addCookie(cookie);
     
+    cookie = new Cookie("newDeliveryDate", "");
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
+
     // 取引先検索画面から戻ってきたとき
     String supplierSearchCode = (String) request.getParameter("supplierCode");
     if(supplierSearchCode != null){
@@ -266,15 +309,23 @@
     String productSearchCode = (String) request.getParameter("productCode");
     if(productSearchCode != null){
         // 商品検索画面から戻ってきたとき
+        Boolean wkDelFlg = false;
+        String wkDetailCode = "0";
         String productSearchName  = (String) request.getParameter("productName");
         String productSearchColor = (String) request.getParameter("color");
         int productSearchStock = Integer.parseInt(request.getParameter("stock"));
         int productSearchPrice = Integer.parseInt(request.getParameter("price"));
         
         // テーブル用HTMLを作成する
-        detailHTML += detailHtmlCreate(productSearchCode,productSearchName,productSearchColor,productSearchStock,productSearchPrice,0,0);
+        detailHTML += detailHtmlCreate(wkDelFlg, productSearchCode, wkDetailCode, productSearchName,productSearchColor,productSearchStock,productSearchPrice,0,0);
         
     }
+    
+    // 合計値をフォーマットして設定
+    taxSt = nfCur.format(taxSum);
+    totalSt = nfCur.format(total);
+
+
     
     // DBクローズ
     da.close();
@@ -306,13 +357,15 @@
                 </div>            
 
     		<div class="col-md-4">
-                    <label for="departmentCode" class="col-form-label">部署</label>
-                    <input type="text" class="form-control" id="departmentCode" value="<%= departmentName %>" readonly>
+                    <label for="departmentName" class="col-form-label">部署</label>
+                    <input type="text" class="form-control" id="departmentName" value="<%= departmentName %>" readonly>
+                    <input type="hidden" class="form-control" id="departmentCode" value="<%= departmentCode %>">
                 </div>            
 
 		<div class="col-md-4">
-                    <label for="orderUserCode" class="col-form-label">受注者</label>
-                    <input type="text" class="form-control" id="orderUserCode" value="<%= orderUserName %>" readonly>
+                    <label for="orderUserName" class="col-form-label">受注者</label>
+                    <input type="text" class="form-control" id="orderUserName" value="<%= orderUserName %>" readonly>
+                    <input type="hidden" class="form-control" id="orderUserCode" value="<%= orderUserCode %>">
                 </div>            
             </div>
 
