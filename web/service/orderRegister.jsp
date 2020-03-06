@@ -32,6 +32,7 @@
     
     if(processRequest.equals("insert")){
 
+        orderCode = "0"; // ORDERSテーブルが空の場合の対応
         String sql = "SELECT MAX(ORDER_CODE)+1 NEW_ORDER_CODE FROM ORDERS";
         ResultSet rs = da.getResultSet(sql);
         while(rs.next()){
