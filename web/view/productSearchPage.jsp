@@ -174,6 +174,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
     
 	//テーブルヘッダー部を作成する
 	String tableHTML = "<table class=\"table table-striped table-bordered text-nowrap\" id=\"searchTable\">";
+	tableHTML += "<thead>";
 	tableHTML += "<tr class=\"bg-dark\">";
 	tableHTML += "<th scope=\"col\" class=\"text-white\">選択</th>";
 	tableHTML += "<th scope=\"col\" class=\"text-white\">商品コード</th>";
@@ -189,7 +190,7 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	tableHTML += "<th scope=\"col\" class=\"text-white\">素材（裏）</th>";
 	tableHTML += "<th scope=\"col\" class=\"text-white\">JANコード</th>";
 	tableHTML += "</tr>";
-	tableHTML += "</thread>";
+	tableHTML += "</thead>";
 
 	tableHTML += "<tbody>";
 

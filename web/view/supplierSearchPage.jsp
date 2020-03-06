@@ -96,6 +96,7 @@
 
 	//テーブルヘッダー部を作成する
 	String tableHTML = "<table class=\"table table-striped table-bordered text-nowrap\" id=\"searchTable\">";
+	tableHTML += "<thead>";
 	tableHTML += "<tr class=\"bg-dark\">";
 	tableHTML += "<th scope=\"col\" class=\"text-white\">選択</th>";
 	tableHTML += "<th scope=\"col\" class=\"text-white\">取引先コード</th>";
@@ -104,7 +105,7 @@
 	tableHTML += "<th scope=\"col\" class=\"text-white\">郵便番号</th>";
 	tableHTML += "<th scope=\"col\" class=\"text-white\">住所</th>";
 	tableHTML += "</tr>";
-	tableHTML += "</thread>";
+	tableHTML += "</thead>";
 
 	tableHTML += "<tbody>";
 
