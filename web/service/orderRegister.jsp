@@ -19,8 +19,6 @@
     String orderUserCode = URLDecoder.decode(request.getParameter("orderUserCode"),"UTF-8");
     String order = URLDecoder.decode(request.getParameter("parameterJson"),"UTF-8"); // 受注明細情報
     
-    
-
     System.out.println("orderCode:"+orderCode);
     System.out.println("supplierCode:"+supplierCode);
     System.out.println("deliveryDate:"+deliveryDate);
@@ -122,7 +120,7 @@
         // 明細更新
         String jsonKey = ""; // JSON形式のキー値を格納する変数
         boolean delFlg = true;
-        int detailCode = 1;
+        int detailCode = 0;
         String productCode = "";
         String colorCode = "";
         int orderCount = 0;
@@ -140,6 +138,7 @@
 
                 case START_OBJECT: // 商品情報の始まりなので変数を初期化
                     delFlg = true;
+                    detailCode = 0;
                     productCode = "";
                     colorCode = "";
                     orderCount = 0;
@@ -173,14 +172,30 @@
                     }
                     break;
                 case END_OBJECT: // 商品情報の終わりなのでUPDATE処理を行う
-                    sql = "UPDATE DETAILS "
-                        + "SET ORDER_COUNT = "+ orderCount +", "
-                        +     "ORDER_PRICE = "+ orderPrice +", "
-                        +     "DELETE_FLAG = "+ delFlg +", "
-                        +     "PRODUCT_CODE = '"+ productCode +"', "
-                        +     "COLOR_CODE  = '"+ colorCode +"'"
-                        + "WHERE ORDER_CODE = '"+ orderCode + "' "
-                        +   "AND DETAIL_CODE = '"+ detailCode +"'";
+                    
+                    if(detailCode != 0){
+                        sql = "UPDATE DETAILS "
+                            + "SET ORDER_COUNT = "+ orderCount +", "
+                            +     "ORDER_PRICE = "+ orderPrice +", "
+                            +     "DELETE_FLAG = "+ delFlg +", "
+                            +     "PRODUCT_CODE = '"+ productCode +"', "
+                            +     "COLOR_CODE  = '"+ colorCode +"'"
+                            + "WHERE ORDER_CODE = '"+ orderCode + "' "
+                            +   "AND DETAIL_CODE = '"+ detailCode +"'";
+                    }else{
+                        // 明細番号が0の行は新規追加行なのでINSERT処理を行う
+                        if(!delFlg){
+                            // 明細番号の最大値を取得
+                            sql = "SELECT MAX(DETAIL_CODE)+1 NEW_DETAIL_CODE FROM DETAILS WHERE ORDER_CODE = '"+ orderCode +"'";
+                            ResultSet rs = da.getResultSet(sql);
+                            while(rs.next()){
+                                detailCode = rs.getInt("NEW_DETAIL_CODE");
+                            }
+
+                            sql = "INSERT INTO DETAILS(ORDER_CODE, DETAIL_CODE, ORDER_COUNT, ORDER_PRICE, DELETE_FLAG, PRODUCT_CODE, COLOR_CODE) "
+                                             + "VALUES("+ orderCode +", "+ detailCode +", "+ orderCount +", "+ orderPrice +", false, '"+ productCode +"', '"+ colorCode +"')";
+                        }
+                    }
                     da.execute(sql);
                     break;
            }

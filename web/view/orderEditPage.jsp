@@ -245,7 +245,7 @@
                 // テーブル用HTMLを作成する
                 detailHTML += detailHtmlCreate(detailDeleteFlg,
                                                jsonObj.getString("productCode",""),
-                                               jsonObj.getString("detailCode","0"),
+                                               String.valueOf(jsonObj.getInt("detailCode",0)),
                                                jsonObj.getString("productName",""),
                                                jsonObj.getString("colorCode",""),
                                                jsonObj.getInt("stock",0),
