@@ -6,7 +6,8 @@
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%
-    String bsCss = "<link rel='stylesheet' href='../css/bootstrap.min.css'>";
+    String bsCss = "<meta name='viewport' content='width=device-width, initial-scale=1'>" +
+                   "<link rel='stylesheet' href='../css/bootstrap.min.css'>";
     
     String bsJs = "<script src='../js/jquery-3.4.1.min.js'></script> " + 
                   "<script src='../js/popper.min.js'></script> " +
