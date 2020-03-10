@@ -90,6 +90,15 @@
     System.out.println("orderUserCode:"+orderUserCode);
     System.out.println("orderList:"+order);
     
+    // 正常終了時に受注明細画面に表示するメッセージ
+    String successMessage = "";
+    
+    // 在庫チェックがNGの時に受注明細画面に表示するメッセージ
+    String stockMessage = "";
+    
+    // エラーによりロールバックが必要になった場合のフラグ
+    Boolean rollbackFlg = false;
+    
     // DB接続    
     DatabeseAccess da = new DatabeseAccess();
     da.open();
@@ -180,16 +189,21 @@
                             detailCode++;  // 明細番号インクリメント
                         }else{
                             // 在庫が足らない場合はロールバックして処理終了
-                            da.rollback();
-                            da.close();
-                            return;
+                            stockMessage = "在庫が引当できませんでした。\\n最新の状態で再度処理を実行してください";
+                            rollbackFlg = true;
                         }                        
                     }
                     break;
            }        
         }
         
-        da.commit();
+        // ロールバックか否か
+        if(rollbackFlg){
+            da.rollback();            
+        }else{
+            successMessage = "受注の新規登録が完了しました";
+            da.commit();            
+        }
         
     }else if(processRequest.equals("update")){
 
@@ -279,10 +293,9 @@
                             }
 
                         }else{
-                             // 在庫が足らない場合はロールバックして処理終了
-                             da.rollback();
-                             da.close();
-                             return;
+                            // 在庫が足らない場合はロールバックして処理終了
+                            stockMessage = "在庫が引当できませんでした。最新の状態で再度処理を実行してください";
+                            rollbackFlg = true;
                         }                        
                         
 
@@ -303,9 +316,8 @@
                                 newDetailsInsert(orderCode, detailCode, orderCount, orderPrice, productCode, colorCode, da);
                             }else{
                                 // 在庫が足らない場合はロールバックして処理終了
-                                da.rollback();
-                                da.close();
-                                return;
+                                stockMessage = "在庫が引当できませんでした。\\n最新の状態で再度処理を実行してください";
+                                rollbackFlg = true;
                             }                        
 
                         }
@@ -331,9 +343,14 @@
         sql = "UPDATE ORDERS SET DELETE_FLAG = "+ hederDelFlg +" "
            + "WHERE  ORDER_CODE = '"+ orderCode +"' ";        
         da.execute(sql);
-
         
-        da.commit();
+        // ロールバックか否か
+        if(rollbackFlg){
+            da.rollback();            
+        }else{
+            successMessage = "受注の変更処理が完了しました";
+            da.commit();            
+        }
         
     }else if(processRequest.equals("delete")){
         
@@ -349,6 +366,7 @@
            + "WHERE  ORDER_CODE = '"+ orderCode +"' ";        
         da.execute(sql);
 
+        successMessage = "受注の削除処理が完了しました";
         da.commit();
         
     }
@@ -368,6 +386,8 @@
     </head>
     <body>
         <input type="hidden" id="orderCode" value="<%= orderCode %>">
+        <input type="hidden" id="stockMessage" value="<%= stockMessage %>">
+        <input type="hidden" id="successMessage" value="<%= successMessage %>">
 
         <!-- Bootstrap JavaScript -->
         <%= bsJs %>

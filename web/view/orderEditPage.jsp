@@ -106,6 +106,33 @@
     // リクエストパラメータ文字コード設定
     request.setCharacterEncoding("UTF-8");
     
+    // 正常終了メッセージの設定
+    String successMsg = "";
+    // orderRegisterで正常終了した場合のみ設定される
+    String successMessage = (String) request.getParameter("successMessage");
+    if(successMessage != null && !successMessage.equals("")){
+        successMsg = "<div class='alert alert-success alert-dismissible fade show' role='alert'> ";                 
+        successMsg += URLDecoder.decode(successMessage, "UTF-8");
+        successMsg += "<button type='button' class='close' data-dismiss='alert' aria-label='Close'>" ;
+        successMsg += "<span aria-hidden='true'>&times;</span>" ;
+        successMsg += "</button>";
+        successMsg += "</div>";        
+    }
+    
+    // エラーメッセージの設定
+    String errMsg = "";
+    // orderRegisterで在庫チェックに引っかかった場合のみ設定される
+    String stockMessage = (String) request.getParameter("stockMessage");
+    if(stockMessage != null && !stockMessage.equals("")){
+        errMsg = "<div class='alert alert-danger alert-dismissible fade show' role='alert'> ";                 
+        errMsg += URLDecoder.decode(stockMessage, "UTF-8");
+        errMsg += "<button type='button' class='close' data-dismiss='alert' aria-label='Close'>" ;
+        errMsg += "<span aria-hidden='true'>&times;</span>" ;
+        errMsg += "</button>";
+        errMsg += "</div>";        
+    }
+    
+    
     // 受注番号の取得
     String orderCode = (String) request.getParameter("orderCode");        
     if(orderCode == null || orderCode.equals("")){
@@ -381,6 +408,8 @@
 	<h2 class="text-center mt-3">受注明細</h2>
         <div class="container-fluid">
         <form class="mx-5">
+            <%= successMsg %> <!-- 正常終了メッセージ表示部 -->
+            <%= errMsg %>     <!-- エラーメッセージ表示部 -->
             
             <!-- 受注ヘッダー部 -->
             <div class="row form-group" >
