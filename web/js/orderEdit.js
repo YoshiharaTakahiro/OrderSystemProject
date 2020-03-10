@@ -129,9 +129,18 @@ $(function () {
                 var resText = xhr.responseText;
                 var supplierInfo = JSON.parse(resText);
                 
+                var supplierCodeSt = document.getElementById('supplierCode');
                 var supplierSt = document.getElementById('supplierName');
-                supplierSt.value = supplierInfo.supplierName
-                    
+                if(supplierInfo.supplierCode == ''){
+                    supplierCodeSt.value = supplierInfo.supplierCode
+                    supplierSt.value = supplierInfo.supplierName
+                    alert("指定された取引先はありません");
+                }else{
+                    supplierSt.value = supplierInfo.supplierName
+                }
+
+                
+                
             }
         }
         
@@ -144,6 +153,8 @@ $(function () {
         // 商品コード取得
         var addProductCode = $("#addProductCode").val();
         if(addProductCode == ""){
+            alert("新規追加する商品コードを入力してください");
+            $("#addProductCode").focus();
             return;
         }
 
@@ -162,6 +173,12 @@ $(function () {
                 // 商品名、カラー、在庫、単価はデータベースから取得
                 var resText = xhr.responseText;                
                 var productInfo = JSON.parse(resText);
+                
+                // 商品存在チェック（無ければ後続の処理は行わない）
+                if(productInfo.productCode == ''){
+                    alert("指定された商品コードはありません");
+                    return;
+                }
                                 
                 // 明細情報取得
                 var table = document.getElementById('orderDetailTable');
@@ -245,7 +262,7 @@ $(function () {
             var price = Number(table.rows[i].cells[5].innerText.replace(/,/g, '').substring(1));    // 価格
             var productCount = Number(table.rows[i].cells[6].children[0].value); // 個数
             var subtotal = Number(table.rows[i].cells[7].innerText.replace(/,/g, '').substring(1)); // 小計
-                        
+                                    
             var productJson = {
                 deleteFlg : deleteFlg,
                 detailCode : detailCode,
@@ -272,19 +289,71 @@ $(function () {
         // 入力チェック
         if($('#supplierCode').val() == '' ){
             alert("取引先コードを入力してください");
+            $('#supplierCode').focus();
             return;
-        }       
+        }
         
+        // 入力チェック
         if($('#deliveryDate').val() == '' ){
-            alert("配送日を入力してください");
+            alert("納品日を入力してください");
+            $('#deliveryDate').focus();
             return;
+        }
+        // 妥当性チェック
+        var delliveryDate = new Date($('#deliveryDate').val());
+        if(delliveryDate == 'Invalid Date'){
+            alert("納品日はYYYY/MM/DD形式で入力してください");
+            $('#deliveryDate').focus();
+            return;            
         }       
-        
+        // 現在日付 < 納品日チェック
+        var nowDate = new Date();
+        if(nowDate >= delliveryDate){
+            var dateSt = nowDate.getFullYear() + '/' + (nowDate.getMonth()+1) + '/' + nowDate.getDate()
+            alert("納品日は"+ dateSt +"以降の日付を指定してください");
+            $('#deliveryDate').focus();
+            return;            
+        }
+                
+        // 入力チェック
         var productJson = productJsonCreate();
         if(productJson.length == 0 ){
             alert("商品を入力してください");
             return;
         }
+        
+        var deleteCount = 0;
+        var allCount = 0;
+        for (var item in productJson){
+            // カラープルダウンチェック
+            var colorCode = productJson[item]['colorCode'];
+            if(colorCode == ""){
+                alert("カラーを選択してください");
+                return;                
+            }
+            
+            // 数値チェック
+            var productCount = productJson[item]['productCount'];
+            if(productCount <= 0 ){
+                alert("個数は1以上を入力してください");
+                return;
+            }
+            
+            var deleteFlg = productJson[item]['deleteFlg'];
+            if(deleteFlg){
+                deleteCount++;
+            }
+            allCount++;
+            
+            // 在庫数チェックはサーバサイド側で実施する。            
+        }
+        
+        // 有効商品存在チェック
+        if(deleteCount == allCount){
+            alert("すべての商品が削除対象になっています。\n受注を取り消す場合は削除処理をしてください");
+            return;
+        }
+        
         
         var processText = "";
         if(process == 'insert'){
@@ -416,7 +485,8 @@ $(function () {
     };
     
     // 商品検索ボタン
-    $("#searchProductBt").click( function() {        
+    $("#searchProductBt").click( function() { 
+                
         pageTransition('productSearchPage.jsp');        
     });
 
