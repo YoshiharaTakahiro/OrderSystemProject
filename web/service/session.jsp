@@ -37,7 +37,7 @@
         session.setAttribute("DepartmentCode", rs.getString("DEPARTMENT_CODE"));
         
         // トップページにリダイレクト(遷移)
-        response.sendRedirect("../view/toppage.jsp");
+        response.sendRedirect("../view/orderListPage.jsp");
 
     }else{        
         // データが取得できない場合はログインに戻る
