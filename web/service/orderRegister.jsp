@@ -9,6 +9,70 @@
 <%@page import="java.io.*, java.util.*, java.net.URLDecoder"%>
 <%@page import="javax.json.*, javax.json.stream.JsonParser"%>
 <%@include file="../service/bootstrap.jsp" %>
+<%!
+    // 指定された商品コードとカラーの在庫のチェックを行う
+    Boolean stockCheck(String productCode, String colorCode, int orderCount, DatabeseAccess da) throws Exception{
+        // 在庫確認
+        int stock = 0;
+        int allocation = 0;
+        String sql = "SELECT STOCK, ALLOCATION FROM PRODUCTS WHERE PRODUCT_CODE = '"+ productCode +"' AND COLOR_CODE = '"+ colorCode +"' FOR UPDATE"; // 商品情報ロック
+        ResultSet rs = da.getResultSet(sql);
+        if(rs.next()){
+            stock = rs.getInt("STOCK");
+            allocation = rs.getInt("ALLOCATION");
+        }
+        
+        // 在庫と注文数と引当数チェック
+        Boolean stockOK = false;
+        if(stock >= (allocation + orderCount)){
+            stockOK = true;
+        }else{
+            stockOK = false;
+        }
+        return stockOK;
+    }
+    
+    // 新規行登録処理
+    void newDetailsInsert(String orderCode, int detailCode, int orderCount, int orderPrice, String productCode, String colorCode, DatabeseAccess da) throws Exception{
+        // 明細登録
+        String sql = "INSERT INTO DETAILS(ORDER_CODE, DETAIL_CODE, ORDER_COUNT, ORDER_PRICE, DELETE_FLAG, PRODUCT_CODE, COLOR_CODE) "
+                         + "VALUES("+ orderCode +", "+ detailCode +", "+ orderCount +", "+ orderPrice +", false, '"+ productCode +"', '"+ colorCode +"')";
+        da.execute(sql);
+
+        // 在庫引当処理
+        sql = "UPDATE PRODUCTS SET ALLOCATION = ALLOCATION + "+ orderCount +" "
+            + "WHERE  PRODUCT_CODE = '"+ productCode +"' AND COLOR_CODE = '"+ colorCode +"'";
+        da.execute(sql);    
+    }
+    
+    // 引当済みキャンセル処理
+    void undoAllocation(String orderCode, DatabeseAccess da) throws Exception{
+    
+        DatabeseAccess detailDa = new DatabeseAccess();
+        detailDa.open();
+    
+        // 変更前明細の引当数を元に戻す
+        String sql = "SELECT PRODUCT_CODE, COLOR_CODE, ORDER_COUNT FROM DETAILS "
+            + "WHERE ORDER_CODE = '"+ orderCode +"' "
+            + "AND   DELETE_FLAG = false "
+            + "ORDER BY ORDER_CODE, DETAIL_CODE";
+
+        ResultSet rs = detailDa.getResultSet(sql);
+        while(rs.next()){
+            String beforeProductCode = rs.getString("PRODUCT_CODE");
+            int beforeColorCode = rs.getInt("COLOR_CODE");
+            int beforeOrderCount = rs.getInt("ORDER_COUNT");
+            
+            // 商品ごとの引当済みを更新
+            sql = "UPDATE PRODUCTS SET ALLOCATION = ALLOCATION - " + beforeOrderCount + " "
+                + "WHERE PRODUCT_CODE = '"+ beforeProductCode +"' "
+                + "AND   COLOR_CODE = '"+ beforeColorCode +"' ";
+            da.execute(sql);            
+        }        
+        detailDa.close();
+    
+    }
+%>    
 <%
     // リクエストパラメータ受け取り
     String processRequest = URLDecoder.decode(request.getParameter("processRequest"),"UTF-8"); //処理パラメータ
@@ -41,9 +105,17 @@
             orderCode = "1"; // ORDERSテーブルが空の場合の対応            
         }
         
-        // ヘッダ登録 税率マスタをパラメータで受け取る
+        // 税率マスタから現在日付の税率を取得
+        int taxCode = 1;
+        sql = "select TAX_CODE from TAXS where TAX_START <= CURDATE()  order by TAX_START";
+        rs = da.getResultSet(sql);
+        while(rs.next()){
+            taxCode = rs.getInt("TAX_CODE");
+        }
+                
+        // ヘッダ登録
         sql = "INSERT INTO ORDERS(ORDER_CODE, ORDER_DATE, DELIVERY_DATE, DELETE_FLAG, SUPPLIER_CODE, TAX_CODE, DEPARTMENT_CODE, USER_CODE) "
-                        + "VALUES("+ orderCode +", CURDATE(), '"+ deliveryDate +"', false, '"+ supplierCode +"', 1, '"+ departmentCode +"', '"+ orderUserCode +"')";
+                        + "VALUES("+ orderCode +", CURDATE(), '"+ deliveryDate +"', false, '"+ supplierCode +"', "+ taxCode +", '"+ departmentCode +"', '"+ orderUserCode +"')";
         
         da.execute(sql);
 
@@ -99,12 +171,19 @@
                     }
                     break;
                 case END_OBJECT: // 商品情報の終わりなのでINSERT処理を行う
-                    if(!delFlg){
-                        sql = "INSERT INTO DETAILS(ORDER_CODE, DETAIL_CODE, ORDER_COUNT, ORDER_PRICE, DELETE_FLAG, PRODUCT_CODE, COLOR_CODE) "
-                                         + "VALUES("+ orderCode +", "+ detailCode +", "+ orderCount +", "+ orderPrice +", false, '"+ productCode +"', '"+ colorCode +"')";
-                        System.out.println(sql);
-                        da.execute(sql);
-                        detailCode++;                        
+                    if(!delFlg){ // 商品削除にチェックが入っている商品は登録しない
+                        
+                        // 在庫チェック
+                        if(stockCheck(productCode, colorCode, orderCount, da)){
+                            
+                            newDetailsInsert(orderCode, detailCode, orderCount, orderPrice, productCode, colorCode, da);
+                            detailCode++;  // 明細番号インクリメント
+                        }else{
+                            // 在庫が足らない場合はロールバックして処理終了
+                            da.rollback();
+                            da.close();
+                            return;
+                        }                        
                     }
                     break;
            }        
@@ -119,6 +198,9 @@
                    + "WHERE  ORDER_CODE = '"+ orderCode +"' ";
         
         da.execute(sql);
+                
+        // 変更前明細の引当数を元に戻す
+        undoAllocation(orderCode, da);
 
         // 明細更新
         String jsonKey = ""; // JSON形式のキー値を格納する変数
@@ -176,37 +258,87 @@
                     break;
                 case END_OBJECT: // 商品情報の終わりなのでUPDATE処理を行う
                     
-                    if(detailCode != 0){
-                        sql = "UPDATE DETAILS "
-                            + "SET ORDER_COUNT = "+ orderCount +", "
-                            +     "ORDER_PRICE = "+ orderPrice +", "
-                            +     "DELETE_FLAG = "+ delFlg +", "
-                            +     "PRODUCT_CODE = '"+ productCode +"', "
-                            +     "COLOR_CODE  = '"+ colorCode +"'"
-                            + "WHERE ORDER_CODE = '"+ orderCode + "' "
-                            +   "AND DETAIL_CODE = '"+ detailCode +"'";
+                    if(detailCode != 0){                        
+
+                        // 在庫と注文数と引当数チェック
+                        if(stockCheck(productCode, colorCode, orderCount, da)){
+                            sql = "UPDATE DETAILS "
+                                + "SET ORDER_COUNT = "+ orderCount +", "
+                                +     "ORDER_PRICE = "+ orderPrice +", "
+                                +     "DELETE_FLAG = "+ delFlg +", "
+                                +     "PRODUCT_CODE = '"+ productCode +"', "
+                                +     "COLOR_CODE  = '"+ colorCode +"'"
+                                + "WHERE ORDER_CODE = '"+ orderCode + "' "
+                                +   "AND DETAIL_CODE = '"+ detailCode +"'";
+                            da.execute(sql);
+                        
+                            if(!delFlg){ // 商品削除行は在庫引当行わない
+                                sql = "UPDATE PRODUCTS SET ALLOCATION = ALLOCATION + "+ orderCount +" "
+                                    + "WHERE  PRODUCT_CODE = '"+ productCode +"' AND COLOR_CODE = '"+ colorCode +"'";
+                                da.execute(sql);
+                            }
+
+                        }else{
+                             // 在庫が足らない場合はロールバックして処理終了
+                             da.rollback();
+                             da.close();
+                             return;
+                        }                        
+                        
+
                     }else{
                         // 明細番号が0の行は新規追加行なのでINSERT処理を行う
                         if(!delFlg){
+                            
                             // 明細番号の最大値を取得
                             sql = "SELECT MAX(DETAIL_CODE)+1 NEW_DETAIL_CODE FROM DETAILS WHERE ORDER_CODE = '"+ orderCode +"'";
                             ResultSet rs = da.getResultSet(sql);
-                            while(rs.next()){
+                            if(rs.next()){
                                 detailCode = rs.getInt("NEW_DETAIL_CODE");
                             }
 
-                            sql = "INSERT INTO DETAILS(ORDER_CODE, DETAIL_CODE, ORDER_COUNT, ORDER_PRICE, DELETE_FLAG, PRODUCT_CODE, COLOR_CODE) "
-                                             + "VALUES("+ orderCode +", "+ detailCode +", "+ orderCount +", "+ orderPrice +", false, '"+ productCode +"', '"+ colorCode +"')";
+                            // 在庫と注文数と引当数チェック
+                            if(stockCheck(productCode, colorCode, orderCount, da)){                                
+                                // 新規行追加
+                                newDetailsInsert(orderCode, detailCode, orderCount, orderPrice, productCode, colorCode, da);
+                            }else{
+                                // 在庫が足らない場合はロールバックして処理終了
+                                da.rollback();
+                                da.close();
+                                return;
+                            }                        
+
                         }
                     }
-                    da.execute(sql);
                     break;
            }
         }
         
+        // １件でも明細が有効ならヘッダの削除フラグをFALSEに更新して有効化
+        // 有効な明細が0件の場合はヘッダの削除フラグをTRUE
+        Boolean hederDelFlg = false;
+        sql = "SELECT COUNT(*) AS CNT FROM DETAILS "
+                + "WHERE ORDER_CODE = '"+ orderCode +"' "
+                + "AND DELETE_FLAG = false ";
+        ResultSet rs = da.getResultSet(sql);
+        if(rs.next()){
+            int cnt = rs.getInt("CNT");
+            if(cnt == 0){
+                hederDelFlg = true;
+            }
+        }
+        
+        sql = "UPDATE ORDERS SET DELETE_FLAG = "+ hederDelFlg +" "
+           + "WHERE  ORDER_CODE = '"+ orderCode +"' ";        
+        da.execute(sql);
+
+        
         da.commit();
         
     }else if(processRequest.equals("delete")){
+        
+        // 削除前明細の引当数を元に戻す
+        undoAllocation(orderCode, da);
         
         // 削除処理の場合は、受注のヘッダと明細の削除フラグをTRUEに更新（論理削除）
         String sql = "UPDATE ORDERS SET DELETE_FLAG = true "
