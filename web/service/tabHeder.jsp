@@ -15,7 +15,7 @@
             + "<h5 class=\"text-right mt-3 mr-3\">" + userid + " : " + username + " <input class=\"btn btn-secondary\" type=\"button\" onclick=\"location.href='../service/logout.jsp'\" value=\"ログアウト\"></h5> "
             + "<!-- タブ部分 --> "
             + "<ul class=\"nav nav-tabs mx-5\"> "
-            + "<li class=\"nav-item\"><a class=\"nav-link active\" href=\"./toppage.jsp\">受注</a></li> "
+            + "<li class=\"nav-item\"><a class=\"nav-link active\" href=\"./orderListPage.jsp\">受注</a></li> "
             + "<li class=\"nav-item\"><a class=\"nav-link disabled\" href=\"#\">取引先</a></li> "
             + "<li class=\"nav-item\"><a class=\"nav-link disabled\" href=\"#\">商品</a></li> "
             + "<li class=\"nav-item\"><a class=\"nav-link disabled\" href=\"#\">カテゴリ</a></li> "
