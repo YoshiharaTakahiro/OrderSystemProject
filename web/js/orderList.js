@@ -60,33 +60,34 @@
    } else {
      itemRecord.innerHTML = "該当案件なし．"
    }
+   toEditPage()
  })
 
 
 
  //年月のテキストボックスでのイベント　focus → change → input
  orderDateBox.addEventListener('focus', function () {
- //changeをリッスンして動く →blur
-  orderDateBox.addEventListener('blur', function () {
-    let num = orderDateBox.value
-    console.log(num)
-    if (num == "") {
-      itemRecord.innerHTML = const_itemRecord
-    } else if (document.getElementsByClassName(num) != null) {
-      let orderDate = document.getElementsByClassName(num)
-      
-      let tmp = "<tr>"+orderDate[0].parentNode.innerHTML+"</tr>"
-        //for (let i = 1; i < orderDate.length; i++) {
-        //  tmp += "<tr>"+orderDate[i].parentNode.innerHTML+"</tr>"             
-        //}
-      itemRecord.innerHTML = tmp
-      console.log(tmp)
-    } else {
-      itemRecord.innerHTML = "該当案件なし．"
-    }
+   //changeをリッスンして動く →blur
+   orderDateBox.addEventListener('blur', function () {
+     let num = orderDateBox.value
+     console.log(num)
+     if (num == "") {
+       itemRecord.innerHTML = const_itemRecord
+     } else if (document.getElementsByClassName(num) != null) {
+       let orderDate = document.getElementsByClassName(num)
 
-  })
-})
+       let tmp = "<tr>" + orderDate[0].parentNode.innerHTML + "</tr>"
+       //for (let i = 1; i < orderDate.length; i++) {
+       //  tmp += "<tr>"+orderDate[i].parentNode.innerHTML+"</tr>"             
+       //}
+       itemRecord.innerHTML = tmp
+       console.log(tmp)
+     } else {
+       itemRecord.innerHTML = "該当案件なし．"
+     }
+     toEditPage()
+   })
+ })
  // 取引先IDのテキストボックスでのイベント
 
  //fucus中のみchangeをリッスンして動く
@@ -99,9 +100,9 @@
    } else if (eval(num) && document.getElementsByClassName(num) != null) {
      let supplierCode = document.getElementsByClassName(num)
      //console.log(supplierCode)
-     let tmp = "<tr>"+supplierCode[0].parentNode.innerHTML+"</tr>"
+     let tmp = "<tr>" + supplierCode[0].parentNode.innerHTML + "</tr>"
      for (let i = 1; i < supplierCode.length; i++) {
-      tmp += "<tr>"+supplierCode[i].parentNode.innerHTML+"</tr>"
+       tmp += "<tr>" + supplierCode[i].parentNode.innerHTML + "</tr>"
        //let tmp2 = tmp.parentNode.parentNode.innerHTML
        console.log(tmp)
      }
@@ -109,7 +110,7 @@
    } else {
      itemRecord.innerHTML = "該当案件なし．"
    }
-
+   toEditPage()
  })
 
  //以下、jQuery できたらJSで書きたい→3/6書いた

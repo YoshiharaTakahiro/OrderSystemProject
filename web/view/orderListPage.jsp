@@ -189,22 +189,22 @@
                         <input type="text" class="form-control" id="supplierCodeBox" value=<%= supplierCode %>>
             </div> 
 
-            <div class="col-md-1">
+            <div class="col-md-1 d-flex align-items-end">
                 <label> 　</label>
                 <input type="button" class="btn btn-secondary" id="searchSupplierButton" value="検索">
             </div>            
             
-            <div class="col-md-1">
+            <div class="col-md-1 d-flex align-items-end">
                         <label> 　</label>
                         <input type="button" class="btn btn-secondary" id="insertButton" value="登録">
             </div>            
         </div>
         </form>
-        <p>
+        
    
             <b>データの一覧(最大表示100件)</b><br>
             <%= tableHTML %>
-        </p>
+        
         <form name="f1" action="orderEditPage.jsp" method="post" >
             <input type="hidden" name="orderCode" value="" >
         </form>
