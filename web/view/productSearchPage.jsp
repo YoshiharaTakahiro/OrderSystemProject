@@ -21,33 +21,35 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	ResultSet rs;
 
 	DatabeseAccess da = new DatabeseAccess();
+
 	try {
-	da.open();
+		da.open();
 
-	//SQL文を実行する
-	sql = "select DIVISION, GENERAL_CODE, GENERAL_NAME from generals where DIVISION=\"" + division + "\"";
-	rs = da.getResultSet(sql);
+		//SQL文を実行する
+		sql = "select DIVISION, GENERAL_CODE, GENERAL_NAME from generals where DIVISION=\"" + division + "\"";
+		rs = da.getResultSet(sql);
 
-	// DBを読み出してプルダウンメニューを作成する
-	while(rs.next()) {
-		String genCode = rs.getString("GENERAL_CODE");
-		String genName = rs.getString("GENERAL_NAME");
+		// DBを読み出してプルダウンメニューを作成する
+		while(rs.next()) {
+			String genCode = rs.getString("GENERAL_CODE");
+			String genName = rs.getString("GENERAL_NAME");
 
-		optionStr += "<option value=" + "\"" + genCode + "\" ";
+			optionStr += "<option value=" + "\"" + genCode + "\" ";
 
-		if(genCode.equals(queryStr)) {
-		optionStr += "selected";
+			if(genCode.equals(queryStr)) {
+				optionStr += "selected";
+			}
+
+			optionStr += ">" + genName + "</option>";
 		}
 
-		optionStr += ">" + genName + "</option>";
-	}
-
-	da.close();
+		da.close();
 
 	} catch (Exception e) {
 	}
 
 	optionStr += "</select>";  
+	
 	return optionStr;
 }
 %>
