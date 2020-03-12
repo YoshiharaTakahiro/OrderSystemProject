@@ -512,7 +512,7 @@
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td class="text-right">税 (<%= (int)(tax*100) %>\%)</td>  
+                    <td class="text-right">税 (<%= (int)(tax*100) %>%)</td>  
                     <td class="text-right" id="tax"><%= taxSt %></td>
                 </tr>
                 <tr class="table-light">
