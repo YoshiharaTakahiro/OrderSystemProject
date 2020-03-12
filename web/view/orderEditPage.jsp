@@ -5,13 +5,15 @@
 --%>
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@page import="java.sql.*, mydb.DatabeseAccess, java.text.NumberFormat, java.net.URLDecoder, java.io.*, javax.json.*" %>
+<%@page import="java.sql.*, mydb.DatabeseAccess" %>
+<%@page import="java.text.NumberFormat, java.util.Date, java.text.SimpleDateFormat" %>
+<%@page import="java.net.URLDecoder, java.io.*, javax.json.*" %>
 <%@include file="../service/bootstrap.jsp" %>
 <%@include file="../service/sessionCheck.jsp" %>
 <%@include file="../service/tabHeder.jsp" %>
 <%!
-    // 関数
-    String detailHtmlCreate(Boolean detailDeleteFlg, String productCode, String detailCode, String productName, String colorCode, int stock, int orderPrice, int orderCount, int subtotal) throws Exception{
+    // 明細一覧部の行作成処理
+    String detailHtmlCreate(Boolean detailDeleteFlg, String productCode, String detailCode, String productName, String colorCode, int stock, int orderPrice, int orderCount, int subtotal, String deleveryOver, String deleveryOverDis) throws Exception{
         // ナンバーフォーマット
         NumberFormat nfCur = NumberFormat.getCurrencyInstance();  
         
@@ -29,7 +31,7 @@
         ResultSet colorCdRs = colorDa.getResultSet(colorCdSql);
 
         // プルダウン生成
-        String colorPulldown = "<select name=\"color\" class=\"form-control-sm colorPull\"> ";
+        String colorPulldown = "<select name=\"color\" class=\"form-control-sm colorPull\" "+ deleveryOverDis +"> ";
         colorPulldown += "<option value=\"\" selected>選択</option>";                    
         while(colorCdRs.next()){
             colorPulldown += "<option value=\"" + colorCdRs.getString("COLOR_CODE") + "\" ";
@@ -45,7 +47,7 @@
         if(detailDeleteFlg){
             delCheckBox += "checked=\"checked\" ";
         }
-        delCheckBox += ">";
+        delCheckBox += deleveryOverDis + ">";
 
         // テーブル用HTMLを作成する
         String detailHTML = "<tr>" 
@@ -55,7 +57,7 @@
             + "<td>"+ colorPulldown + "</td>"
             + "<td>"+ stock + "</td>"
             + "<td class=\"text-right\">"+ nfCur.format(orderPrice) + "</td>"
-            + "<td><input type=\"text\" class=\"form-control form-control-sm productCount\" value=\"" + orderCount + "\"></td>"
+            + "<td><input type=\"number\" class=\"form-control form-control-sm productCount\" value=\"" + orderCount + "\" "+ deleveryOver +"></td>"
             + "<td class=\"text-right\">"+ nfCur.format(subtotal) + "</td>"
             + "</tr>";            
 
@@ -89,6 +91,12 @@
     int taxSum = 0;
     int total = 0;
     
+    // 読取専用
+    String deleveryOver = "";
+    String deleveryOverDis = "";
+    String notInsert = "";
+    String notInsertDis = "";
+    
     // 明細部
     String detailHTML = "";
     
@@ -97,6 +105,33 @@
     
     // リクエストパラメータ文字コード設定
     request.setCharacterEncoding("UTF-8");
+    
+    // 正常終了メッセージの設定
+    String successMsg = "";
+    // orderRegisterで正常終了した場合のみ設定される
+    String successMessage = (String) request.getParameter("successMessage");
+    if(successMessage != null && !successMessage.equals("")){
+        successMsg = "<div class='alert alert-success alert-dismissible fade show' role='alert'> ";                 
+        successMsg += URLDecoder.decode(successMessage, "UTF-8");
+        successMsg += "<button type='button' class='close' data-dismiss='alert' aria-label='Close'>" ;
+        successMsg += "<span aria-hidden='true'>&times;</span>" ;
+        successMsg += "</button>";
+        successMsg += "</div>";        
+    }
+    
+    // エラーメッセージの設定
+    String errMsg = "";
+    // orderRegisterで在庫チェックに引っかかった場合のみ設定される
+    String stockMessage = (String) request.getParameter("stockMessage");
+    if(stockMessage != null && !stockMessage.equals("")){
+        errMsg = "<div class='alert alert-danger alert-dismissible fade show' role='alert'> ";                 
+        errMsg += URLDecoder.decode(stockMessage, "UTF-8");
+        errMsg += "<button type='button' class='close' data-dismiss='alert' aria-label='Close'>" ;
+        errMsg += "<span aria-hidden='true'>&times;</span>" ;
+        errMsg += "</button>";
+        errMsg += "</div>";        
+    }
+    
     
     // 受注番号の取得
     String orderCode = (String) request.getParameter("orderCode");        
@@ -160,6 +195,19 @@
                 tax = taxRs.getInt("TAX")/100.0;
             }
             
+            // 変更時編集できない項目
+            notInsert = "readonly";
+            notInsertDis = "disabled";
+            
+            // 納品日が過ぎている場合は、変更削除不可とする。
+            Date now = new Date();           
+            SimpleDateFormat sdf = new SimpleDateFormat("yy/MM/dd");
+            Date deliveryDateDate = sdf.parse(deliveryDate);
+            if(deliveryDateDate.before(now)){
+                deleveryOver = "readonly";
+                deleveryOverDis = "disabled";
+            }
+            
         }else{
             // エラー処理させる
         }
@@ -198,16 +246,16 @@
             }
             
             // テーブル用HTMLを作成する
-            detailHTML += detailHtmlCreate(detailDeleteFlg, productCode,detailCode,productName,colorCode,stock,orderPrice,orderCount,subtotal);
+            detailHTML += detailHtmlCreate(detailDeleteFlg, productCode,detailCode,productName,colorCode,stock,orderPrice,orderCount,subtotal, deleveryOver, deleveryOverDis);
 
         }
         
         // 変更・削除ボタン表示
         buttonHTML += "<div class=\"col-auto\"> "
-                    + "<input type=\"button\" class=\"btn btn-secondary\" id=\"updateButton\" value=\"変更\"> "
+                    + "<input type=\"button\" class=\"btn btn-secondary\" id=\"updateButton\" value=\"変更\" "+ deleveryOverDis +"> "
                     + "</div> "
                     + "<div class=\"col-auto\"> "
-                    + "<input type=\"button\" class=\"btn btn-secondary\" id=\"deleteButton\" value=\"削除\"> "
+                    + "<input type=\"button\" class=\"btn btn-secondary\" id=\"deleteButton\" value=\"削除\" "+ deleveryOverDis +"> "
                     + "</div>";
     }
     
@@ -245,13 +293,15 @@
                 // テーブル用HTMLを作成する
                 detailHTML += detailHtmlCreate(detailDeleteFlg,
                                                jsonObj.getString("productCode",""),
-                                               jsonObj.getString("detailCode","0"),
+                                               String.valueOf(jsonObj.getInt("detailCode",0)),
                                                jsonObj.getString("productName",""),
                                                jsonObj.getString("colorCode",""),
                                                jsonObj.getInt("stock",0),
                                                jsonObj.getInt("price",0),
                                                jsonObj.getInt("productCount",0),
-                                               subtotal);
+                                               subtotal,
+                                               deleveryOver,
+                                               deleveryOverDis);
             }
         }
 
@@ -317,7 +367,17 @@
         int productSearchPrice = Integer.parseInt(request.getParameter("price"));
         
         // テーブル用HTMLを作成する
-        detailHTML += detailHtmlCreate(wkDelFlg, productSearchCode, wkDetailCode, productSearchName,productSearchColor,productSearchStock,productSearchPrice,0,0);
+        detailHTML += detailHtmlCreate(wkDelFlg,
+                                       productSearchCode,
+                                       wkDetailCode,
+                                       productSearchName,
+                                       productSearchColor,
+                                       productSearchStock,
+                                       productSearchPrice,
+                                       0,
+                                       0,
+                                       deleveryOver,
+                                       deleveryOverDis);
         
     }
     
@@ -348,6 +408,8 @@
 	<h2 class="text-center mt-3">受注明細</h2>
         <div class="container-fluid">
         <form class="mx-5">
+            <%= successMsg %> <!-- 正常終了メッセージ表示部 -->
+            <%= errMsg %>     <!-- エラーメッセージ表示部 -->
             
             <!-- 受注ヘッダー部 -->
             <div class="row form-group" >
@@ -372,10 +434,10 @@
             <div class="row form-group" >
                 <div class="col-md-3">
                     <label for="supplierCode" class="col-form-label">取引先コード</label>                   
-                    <input type="text" class="form-control" id="supplierCode" placeholder="取引先コードを入力" value="<%= supplierCode %>"> 
+                    <input type="text" class="form-control" id="supplierCode" placeholder="取引先コードを入力" value="<%= supplierCode %>" <%= notInsert %>> 
                 </div>
                 <div class="col-md-1 d-flex align-items-end">
-                    <input type="button" class="btn btn-secondary" id="searchSupplierButton" value="検索"> 
+                    <input type="button" class="btn btn-secondary" id="searchSupplierButton" value="検索" <%= notInsertDis %>> 
                 </div>
                 <div class="col-md-4">
                     <label for="supplierName" class="col-form-label">取引先名</label>                   
@@ -384,7 +446,7 @@
 
                 <div class="col-md-4">
                     <label for="deliveryDate" class="col-form-label">納品日</label>
-                    <input type="text" class="form-control" id="deliveryDate" placeholder="YYYY/MM/DD" value="<%= deliveryDate %>">
+                    <input type="text" class="form-control" id="deliveryDate" placeholder="YYYY/MM/DD" value="<%= deliveryDate %>" <%= deleveryOver %>>
 		</div>
             </div>
 
@@ -432,9 +494,9 @@
                 
                 <!-- 新規追加行 -->
                 <tr class="table-light">
-                    <td scope="row"><input type="button" class="btn btn-secondary" id="searchProductBt" value="検索追加"></td>
-                    <td><input type="text" class="form-control" id="addProductCode" placeholder="追加する商品コードを入力" value=""></td>  
-                    <td><input type="button" class="btn btn-secondary" id="addProductBt" value="商品追加"></td>
+                    <td scope="row"><input type="button" class="btn btn-secondary" id="searchProductBt" value="検索追加" <%= deleveryOverDis %>></td>
+                    <td><input type="text" class="form-control" id="addProductCode" placeholder="追加する商品コードを入力" value=""  <%= deleveryOver %>></td>  
+                    <td><input type="button" class="btn btn-secondary" id="addProductBt" value="商品追加" <%= deleveryOverDis %>></td>
                     <td></td>
                     <td></td>
                     <td></td>

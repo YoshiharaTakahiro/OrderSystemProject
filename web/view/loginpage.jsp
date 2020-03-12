@@ -25,6 +25,24 @@
         errMsg += "</button>";
         errMsg += "</div>";        
     }
+    
+    // ゴミとして残っているクッキー情報がある場合は削除する。
+    Cookie cookie = new Cookie("newProRow", "");
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
+    
+    cookie = new Cookie("newSupplier", "");
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
+    
+    cookie = new Cookie("newSupplierName", "");
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
+    
+    cookie = new Cookie("newDeliveryDate", "");
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
+
 %>
 <!DOCTYPE html>
 <html>

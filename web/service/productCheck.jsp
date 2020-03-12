@@ -19,35 +19,56 @@
     // Jsonオブジェクトビルダー
     JsonObjectBuilder JsonObjB = Json.createObjectBuilder();
     JsonArrayBuilder colorArrayB = Json.createArrayBuilder();
-
-    // 商品情報取得
-    String prodcutSql = "select distinct p.PRODUCT_CODE, p.PRODUCT_NAME "
-                    + "from PRODUCTS p "
-                    + "where p.DELETE_FLAG = false "
-                    + "and p.PRODUCT_CODE = '" + productCode + "' ";
+    
+    // 商品存在チェック
+    int cnt = 0;
+    String prodcutSql = "select count(*) as CNT "
+                      + "from PRODUCTS p "
+                      + "where p.DELETE_FLAG = false "
+                      + "and p.PRODUCT_CODE = '" + productCode + "' ";
 
     ResultSet rs = da.getResultSet(prodcutSql);
-    
-    // Json生成
-    while(rs.next()){
-        JsonObjB.add("productName", rs.getString("PRODUCT_NAME"));
+    if(rs.next()){
+        cnt = rs.getInt("CNT");
     }
     
-    // カラーコード
-    String colorSql = "select p.COLOR_CODE, c.COLOR "
-            + "from PRODUCTS p, COLORS c "
-            + "where p.COLOR_CODE = c.COLOR_CODE "
-            + "and p.DELETE_FLAG = false "
-            + "and p.PRODUCT_CODE = '" + productCode + "' ";
-
-    rs = da.getResultSet(colorSql);
+    // 商品が存在する時のみ情報を取得する
+    if(cnt > 0){
     
-    // Json生成（カラーコード）
-    while(rs.next()){
-        colorArrayB.add(Json.createObjectBuilder().add("colorCode", rs.getString("COLOR_CODE"))
-                                                 .add("color", rs.getString("COLOR")).build());
-    }    
-    JsonObjB.add("colors", colorArrayB);
+        // 商品情報取得
+        prodcutSql = "select distinct p.PRODUCT_CODE, p.PRODUCT_NAME "
+                   + "from PRODUCTS p "
+                   + "where p.DELETE_FLAG = false "
+                   + "and p.PRODUCT_CODE = '" + productCode + "' ";
+
+        rs = da.getResultSet(prodcutSql);
+
+        // Json生成
+        while(rs.next()){
+            JsonObjB.add("productCode", rs.getString("PRODUCT_CODE"));
+            JsonObjB.add("productName", rs.getString("PRODUCT_NAME"));
+        }
+
+        // カラーコード
+        String colorSql = "select p.COLOR_CODE, c.COLOR "
+                + "from PRODUCTS p, COLORS c "
+                + "where p.COLOR_CODE = c.COLOR_CODE "
+                + "and p.DELETE_FLAG = false "
+                + "and p.PRODUCT_CODE = '" + productCode + "' ";
+
+        rs = da.getResultSet(colorSql);
+
+        // Json生成（カラーコード）
+        while(rs.next()){
+            colorArrayB.add(Json.createObjectBuilder().add("colorCode", rs.getString("COLOR_CODE"))
+                                                     .add("color", rs.getString("COLOR")).build());
+        }    
+        JsonObjB.add("colors", colorArrayB);
+    }else{
+        // 空データを送信
+        JsonObjB.add("productCode", "");
+        JsonObjB.add("productName", "");
+    }
 
     // 文字列に変換
     String jsonString;
