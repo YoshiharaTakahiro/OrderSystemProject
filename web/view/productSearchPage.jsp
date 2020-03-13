@@ -98,6 +98,10 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	//戻すorderCodeを作成する
 	if(!queryOrderCodeTmp.equals("")) {
 		queryOrderCode = queryOrderCodeTmp;
+	} else if(!queryPageIdTmp.equals("")) {
+		//このページからキャンセルで前のメージに戻る時に前回のorderCodeを返してしまうバグ修正 2020/03/13
+		//pageId=""かつorderCode=""でこのページが呼ばれた時に元のページに返すorderCodeの初期化処理を追加
+		queryOrderCode = "";
 	}
 
 	DatabeseAccess da = new DatabeseAccess();
@@ -310,10 +314,10 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 	<body>
 		<%!
 			//静的変数
-			int offsetNum = 0;	    //DB表示時のオフセット値
-			int numOfSearch = 0;    //DB検索結果件数
+			int offsetNum = 0;			//DB表示時のオフセット値
+			int numOfSearch = 0;		//DB検索結果件数
 			String queryPageId = "";	//戻り先URL
-			String queryOrderCode = "";   //オーダーNo
+			String queryOrderCode = "";	//オーダーNo
 		%>
 
 		<input type="hidden" id="tmp_value1" value="<%= queryPageId %>">	
@@ -383,7 +387,10 @@ String doPullDownMake(String division, String queryStr, String optionStr){
 				<div class="col-11 clearfix float-right">
 					<div class="float-right">
 						<!-- 直前のページに戻る -->
+						<!-- キャンセル時にもorderCodeをpost返却するように変更 2020/03/13
 						<input class="btn btn-secondary" type="button" onclick="location.href='<%= queryPageId %>'" value="キャンセル">
+						-->
+						<input class="btn btn-secondary" type="button" id="cancelButton" value="キャンセル">
 
 						<!-- 選択ボタン -->
 						<input class="ml-sm-3 btn btn-secondary" type="button" id="selectButton" value="選択">
